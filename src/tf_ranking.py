@@ -117,7 +117,9 @@ def rank_tfs(grn: pd.DataFrame,
             Defaults to 'pagerank'.
         reverse (bool, optional): Whether to reverse the direction of edges in the graph. Defaults to True.
         undirected (bool, optional): Whether to treat the graph as undirected. Defaults to False.
-        weight_key (Union[str, None], optional): The key for edge weights in the GRN. Defaults to None.
+        weight_key (Union[str, None], optional): The key for edge weights in the GRN. If the key 'score' is passed
+            and does not already exist in the GRN, then the weight is computed as the score = -log10(p-vals) * weight.
+            Defaults to None.
         result_folder (Union[str, None], optional): Folder to save the ranked TFs. Defaults to None.
         tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
         fn_prefix (Union[str, None], optional): Optional filename prefix for saving results. Defaults to None.
