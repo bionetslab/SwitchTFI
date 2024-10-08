@@ -14,6 +14,26 @@ def calculate_centrality_nx(grn: pd.DataFrame,
                             weight_key: Union[str, None] = 'weight',
                             tf_target_keys: Tuple[str, str] = ('TF', 'target'),
                             **kwargs) -> Tuple[pd.DataFrame, nx.DiGraph]:
+    """
+    Calculate centrality values for nodes in the GRN using NetworkX.
+
+    This function computes various centrality measures (e.g., PageRank, degree, closeness, etc.) for nodes
+    in a directed or undirected, weighted or unweighted GRN. The GRN is first converted into a NetworkX graph,
+    and the specified centrality measure is calculated for each node.
+
+    Args:
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        centrality_measure (str, optional): The centrality measure to compute ('pagerank', 'out_degree', 'eigenvector', etc.).
+            Defaults to 'pagerank'.
+        reverse (bool, optional): Whether to reverse the direction of edges in the graph. Defaults to True.
+        undirected (bool, optional): Whether to treat the graph as undirected. Defaults to False.
+        weight_key (Union[str, None], optional): The key for edge weights in the GRN. Defaults to 'weight'.
+        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
+        **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
+
+    Returns:
+        Tuple[pd.DataFrame, nx.DiGraph]: A DataFrame with genes and their centrality scores, and the NetworkX graph.
+    """
 
     if weight_key not in grn.columns and weight_key == 'score':
         weights = grn['weight'].to_numpy()
@@ -83,6 +103,29 @@ def rank_tfs(grn: pd.DataFrame,
              tf_target_keys: Tuple[str, str] = ('TF', 'target'),
              fn_prefix: Union[str, None] = None,
              **kwargs) -> pd.DataFrame:
+    """
+    Rank transcription factors (TFs) in the GRN based on their centrality in the network.
+
+    This function ranks transcription factors in the GRN based on a specified centrality measure
+    (e.g., PageRank, degree, closeness). The function computes the centrality measure for all genes
+    and filters the result to retain only TFs. Optionally the all edges can be reversed, all edges
+    can be set to be undirected and edge weights can be defined before computing centrality.
+
+    Args:
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        centrality_measure (str, optional): The centrality measure to use for ranking ('pagerank', 'out_degree', etc.).
+            Defaults to 'pagerank'.
+        reverse (bool, optional): Whether to reverse the direction of edges in the graph. Defaults to True.
+        undirected (bool, optional): Whether to treat the graph as undirected. Defaults to False.
+        weight_key (Union[str, None], optional): The key for edge weights in the GRN. Defaults to None.
+        result_folder (Union[str, None], optional): Folder to save the ranked TFs. Defaults to None.
+        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
+        fn_prefix (Union[str, None], optional): Optional filename prefix for saving results. Defaults to None.
+        **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
+
+    Returns:
+        pd.DataFrame: A DataFrame of ranked transcription factors based on the selected centrality measure.
+    """
 
     assert centrality_measure in {'pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank',
                                   'katz'}, \
@@ -120,6 +163,21 @@ def rank_tfs(grn: pd.DataFrame,
 def grn_to_nx(grn: pd.DataFrame,
               edge_attributes: Union[str, Tuple[str], bool, None] = 'weight',  # If True all columns will be added
               tf_target_keys: Tuple[str, str] = ('TF', 'target')) -> nx.DiGraph:
+    """
+    Convert a GRN DataFrame into a NetworkX graph.
+
+    This function converts a GRN DataFrame into a directed or undirected NetworkX graph. The TF-target gene pairs
+    are used as edges, and additional edge attributes such as weights can be included.
+
+    Args:
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        edge_attributes (Union[str, Tuple[str], bool, None], optional): Edge attributes to include in the graph.
+            If True, all columns are added. Defaults to 'weight'.
+        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
+
+    Returns:
+        nx.DiGraph: A NetworkX directed graph representing the GRN.
+    """
 
     if isinstance(edge_attributes, str):
         edge_attributes = (edge_attributes, )

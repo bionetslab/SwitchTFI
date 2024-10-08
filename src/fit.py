@@ -32,6 +32,41 @@ def fit_model(adata: sc.AnnData,
               save_intermediate: bool = False,
               fn_prefix: Union[str, None] = None,
               **kwargs) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Fit a gene regulatory network (GRN) model and rank transcription factors (TFs) based on centrality measures.
+
+    This function aligns the input AnnData object with the GRN, calculates weights for the edges between
+    TFs and target genes, computes corrected p-values for the weights using the specified permutation
+    method, prunes insignificant edges, and ranks transcription factors based on centrality measures
+    (e.g., PageRank, degree). The resulting transition GRN and ranked TFs can be saved and optionally plotted.
+
+    Args:
+        adata (sc.AnnData): The input AnnData object containing gene expression data.
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        layer_key (Union[str, None], optional): The key for the expression data layer to use. Defaults to 'magic_imputed'.
+        result_folder (Union[str, None], optional): Folder to save the resulting GRN and ranked TFs. Defaults to None.
+        weight_key (str, optional): Column name to store the calculated weights in the GRN. Defaults to 'weight'.
+        n_cell_pruning_params (Union[Tuple[str, float], None], optional): Parameters for pruning of edges in the GRN
+            based on the number of cells available for weight fitting. Defaults to ('percent', 0.2).
+        pvalue_calc_method (str, optional): Method for p-value calculation ('wy', 'bonferroni', 'fdr_bh').
+            Defaults to 'wy'.
+        n_permutations (int, optional): Number of permutations for empirical p-value calculation. Defaults to 1000.
+        fwer_alpha (float, optional): Significance threshold for FWER correction. Defaults to 0.05.
+        centrality_measure (str, optional): Centrality measure to use for ranking TFs ('pagerank', 'out_degree', etc.). Defaults to 'pagerank'.
+        reverse (bool, optional): Whether to reverse the direction of edges in the graph. Defaults to True.
+        undirected (bool, optional): Whether to treat the graph as undirected. Defaults to False.
+        centrality_weight_key (Union[str, None], optional): Column name for weights when calculating centrality. Defaults to None.
+        clustering_obs_key (str, optional): Column name for clustering labels in `adata.obs`. Defaults to 'clusters'.
+        tf_target_keys (Tuple[str, str], optional): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+        verbosity (int, optional): Level of logging for detailed output. Defaults to 0.
+        plot (bool, optional): Whether to plot the resulting GRN and centrality rankings. Defaults to False.
+        save_intermediate (bool, optional): Whether to save intermediate results during the process. Defaults to False.
+        fn_prefix (Union[str, None], optional): Optional prefix for filenames when saving results. Defaults to None.
+        **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
+
+    Returns:
+        Tuple[pd.DataFrame, pd.DataFrame]: The pruned GRN with significant edges and the ranked TFs based on centrality measures.
+    """
 
     if fn_prefix is None:
         fn_prefix = ''
@@ -76,7 +111,7 @@ def fit_model(adata: sc.AnnData,
                                      p_value_key=f'pvals_{pvalue_calc_method}',
                                      result_folder=interm_folder,
                                      verbosity=verbosity,
-                                     weight_key=weight_key,
+                                     # weight_key=weight_key,
                                      fn_prefix=fn_prefix)
 
     ranked_tfs = rank_tfs(grn=grn,

@@ -19,6 +19,30 @@ def compute_westfall_young_adjusted_pvalues(adata: sc.AnnData,
                                             cell_bool_key: str = 'cell_bool',
                                             clustering_dt_reg_key: str = 'cluster_bool_dt',
                                             clustering_obs_key: str = 'clusters') -> pd.DataFrame:
+    """
+    Compute Westfall-Young adjusted p-values for the edges weights fitted to a GRN by SwitchTFI.
+
+    This function performs label permutation to compute empirical p-values for each edge in the GRN
+    using the Westfall-Young method. It fits a regression model and in term a weight for each permutation
+    and calculates the maximum test statistic over all edges of the GRN. The empirical p-value is computed
+    by counting how often the maximum test statistic is more extrem than the true weight. The resulting p-values
+    are adjusted, they control the family-wise error rate (FWER).
+
+    Args:
+        adata (sc.AnnData): The input AnnData object.
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        n_permutations (int, optional): Number of permutations for the Westfall-Young procedure. Defaults to 100.
+        weight_key (str, optional): Column name in the GRN representing the weights. Defaults to 'weight'.
+        cell_bool_key (str, optional): Column name in the GRN containing a bool arrays indicating which cells
+        were used for weight fitting. Defaults to 'cell_bool'.
+        clustering_dt_reg_key (str, optional): Column name in the GRN, containing the arrays with entries
+            corresponding to the clustering derived during weight calculation. Defaults to 'cluster_bool_dt'.
+        clustering_obs_key (str, optional): Key for the cluster labels in `adata.obs`. Defaults to 'clusters'.
+
+    Returns:
+        pd.DataFrame: The GRN with adjusted p-values added in the 'pvals_wy' column.
+    """
+
     # Iterate (for n_permutations):
     #   - Permute labels
     #   - Fit model => weights (for all edges)
@@ -36,7 +60,8 @@ def compute_westfall_young_adjusted_pvalues(adata: sc.AnnData,
         # Get labels of the cells that were used for fitting the weight
         cell_bool = grn[cell_bool_key].iloc[i]
         edge_labels = labels[cell_bool]
-        # Todo: for global permutation, write this in inner loop:
+
+        # Note: for global permutation, write this in inner loop:
         #  edge_labels = np.random.permutation(labels)[cell_bool]
 
         # Get clustering derived from the regressions stump during the weight calculation
@@ -136,6 +161,34 @@ def compute_corrected_pvalues(adata: sc.AnnData,
                               pval_key: Union[str, None] = None,
                               alpha: Union[float, None] = None,
                               fn_prefix: Union[str, None] = None) -> pd.DataFrame:
+    """
+    Compute corrected p-values for GRN edges using simple permutation-based empirical p-values
+    plus multiple testing correction or the Westfall-Young method.
+
+    This function computes either Westfall-Young adjusted p-values or applies a multiple testing correction
+    to empirical p-values based on the specified method. It updates the GRN with the corrected p-values
+    and optionally saves the results.
+
+    Args:
+        adata (sc.AnnData): The input AnnData object.
+        grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
+        method (str, optional): The method for p-value correction ('wy', 'bonferroni', 'fdr_bh'). Defaults to 'wy'.
+        n_permutations (int, optional): Number of permutations for Westfall-Young or empirical p-values. Defaults to 1000.
+        result_folder (Union[str, None], optional): Folder to save the results. Defaults to None.
+        weight_key (str, optional): Column name for the weights in the GRN. Defaults to 'weight'.
+        cell_bool_key (str, optional): Column name in the GRN containing a bool arrays indicating which cells
+        were used for weight fitting. Defaults to 'cell_bool'.
+        clustering_dt_reg_key (str, optional): Column name in the GRN, containing the arrays with entries
+            corresponding to the clustering derived during weight calculation. Defaults to 'cluster_bool_dt'.
+        clustering_obs_key (str, optional): Key for cluster labels in `adata.obs`. Defaults to 'clusters'.
+        plot (bool, optional): Whether to generate a scatter plot of weights vs. p-values. Defaults to False.
+        pval_key (Union[str, None], optional): The column name for p-values in the GRN. Defaults to None.
+        alpha (Union[float, None], optional): Significance level for p-value correction. Defaults to None.
+        fn_prefix (Union[str, None], optional): Optional filename prefix for saving results. Defaults to None.
+
+    Returns:
+        pd.DataFrame: The GRN with corrected p-values added.
+    """
 
     # 'wy', 'bonferroni', 'sidak' control FWER, 'fdr_bh', 'fdr_by' control FDR
     assert method in {'wy', 'bonferroni', 'sidak', 'fdr_bh', 'fdr_by'}, \
@@ -193,8 +246,26 @@ def remove_insignificant_edges(grn: pd.DataFrame,
                                result_folder: Union[None, str] = None,
                                verbosity: int = 0,
                                inplace: bool = True,
-                               fn_prefix: Union[str, None] = None,
-                               **kwargs) -> pd.DataFrame:
+                               fn_prefix: Union[str, None] = None) -> pd.DataFrame:
+    """
+    Remove edges with insignificant weight from the GRN based on previously computed adjusted p-values.
+
+    This function removes edges from the GRN where the adjusted p-value exceeds the
+    specified significance level (alpha). The remaining significant edges are returned, and optionally,
+    the results are saved to a file.
+
+    Args:
+        grn (pd.DataFrame): The GRN DataFrame containing edges and their adjusted p-values.
+        alpha (float, optional): The significance threshold for removing edges. Defaults to 0.05.
+        p_value_key (str, optional): Column name for the p-values to evaluate. Defaults to 'pvals_wy'.
+        result_folder (Union[None, str], optional): Folder to save the filtered GRN. Defaults to None.
+        verbosity (int, optional): Level of logging for detailed output. Defaults to 0.
+        inplace (bool, optional): Whether to modify the GRN in place or return a copy. Defaults to True.
+        fn_prefix (Union[str, None], optional): Optional filename prefix for saving results. Defaults to None.
+
+    Returns:
+        pd.DataFrame: The filtered GRN containing only significant edges.
+    """
 
     if not inplace:
         grn = grn.copy(deep=True)
