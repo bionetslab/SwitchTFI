@@ -19,6 +19,29 @@ def plot_grn(grn: pd.DataFrame,
              tf_target_keys: Tuple[str, str] = ('TF', 'target'),
              axs: Union[plt.Axes, None] = None,
              **kwargs):
+    """
+    Plot the gene regulatory network (GRN) and visualize transcription factor (TF) rankings.
+
+    This function visualizes the GRN by plotting TF-target gene relationships using the `graph_tool` library.
+    Vertices marked with green edging are TFs. A darker shade of blue for the fill color signifies a higher relevance
+    of the TF to the cell state transition (ranking is based on the centrality values of the TFs).
+    Edge thickness is proportional to the edge weight, and edge opacity is proportional to the empirical p-value
+    of the edge (high opacity indicates low/significant p-values).
+    The plot is saved as a PDF and optionally displayed in a matplotlib axis.
+
+    Args:
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        gene_centrality_df (Union[pd.DataFrame, None], optional): A DataFrame of gene centrality rankings. Defaults to None.
+        plot_folder (Union[str, None], optional): Folder to save the plot. Defaults to None.
+        weight_key (str, optional): Column name representing edge weights in the GRN. Defaults to 'weight'.
+        pval_key (str, optional): Column name representing p-values for edges in the GRN. Defaults to 'pvals_wy'.
+        tf_target_keys (Tuple[str, str], optional): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+        axs (Union[plt.Axes, None], optional): Matplotlib axis to display the plot. Defaults to None.
+        **kwargs: Additional arguments, such as `fn_prefix` for filename prefixes.
+
+    Returns:
+        None: The function saves the plot to the specified folder and optionally displays it in a matplotlib axis.
+    """
 
     g = grn_to_gt(grn=grn,
                   gene_centrality_df=gene_centrality_df,
