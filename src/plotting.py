@@ -5,10 +5,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
 import graph_tool.all as gt
+import networkx as nx
 
 from typing import *
 from pdf2image import convert_from_path
 from PIL import Image, ImageChops
+from .tf_ranking import grn_to_nx
 
 
 def plot_grn(grn: pd.DataFrame,
@@ -186,6 +188,110 @@ def plot_grn(grn: pd.DataFrame,
         cax.set_xlim(0, 1)
         cax.set_ylim(0, 1)
         cax.axis('off')'''
+
+
+def plot_regulon(grn: pd.DataFrame,
+                 tf: str,
+                 sort_by: Union[str, None] = None,
+                 top_k: Union[int, None] = None,
+                 out: bool = True,
+                 weight_key: str = 'weight',
+                 pval_key: str = 'pvals_wy',
+                 show: bool = False,
+                 title: Union[str, None] = None,
+                 dpi: int = 100,
+                 node_size: int = 600,
+                 font_size: int = 9,
+                 tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+                 axs: Union[plt.Axes, None] = None):
+    """
+    Plots a transcription factor (TF) and its targets as a subnetwork of the gene regulatory network.
+
+    Args:
+        grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs and additional values such as weights and P-values.
+        tf (str): The transcription factor.
+        sort_by (Union[str, None], optional): Column to sort edges by (e.g., 'score'). Defaults to None.
+        top_k (Union[int, None], optional): Number of top edges to display. Defaults to None (display all).
+        out (bool, optional): If True, plots outgoing edges from TF. If False, plots incoming edges to TF. Defaults to True.
+        weight_key (str, optional): Column for edge weights. Defaults to 'weight'.
+        pval_key (str, optional): Column for p-values of edges. Defaults to 'pvals_wy'.
+        show (bool, optional): If True, displays the plot. Defaults to False.
+        title (Union[str, None], optional): Title for the plot. Defaults to None.
+        dpi (int, optional): Resolution of the plot. Defaults to 100.
+        node_size (int, optional): Size of the network nodes. Defaults to 600.
+        font_size (int, optional): Font size for node labels. Defaults to 9.
+        tf_target_keys (Tuple[str, str], optional): Column names for TF and target in the GRN. Defaults to ('TF', 'target').
+        axs (Union[plt.Axes, None], optional): Existing matplotlib axis to plot on. Defaults to None.
+
+    Returns:
+        None: The function generates and optionally displays the plot.
+    """
+
+    if out:
+        # Keep edges where the TF is the desired TF
+        keep_bool = np.isin(grn[tf_target_keys[0]].to_numpy(), [tf])
+    else:
+        # Keep edges where the target is the desired TF
+        keep_bool = np.isin(grn[tf_target_keys[1]].to_numpy(), [tf])
+
+    regulon = grn[keep_bool].copy().reset_index(drop=True)
+
+    if sort_by is not None:
+        if sort_by not in regulon.columns and sort_by == 'score':
+            weights = regulon[weight_key].to_numpy()
+            pvals = regulon[pval_key].to_numpy()
+            pvals += np.finfo(np.float64).eps
+            regulon['score'] = -np.log10(pvals) * weights
+
+        regulon = regulon.sort_values(sort_by, axis=0, ascending=False)
+
+    if top_k is not None:
+        regulon = regulon[0:top_k]
+
+    reg = grn_to_nx(grn=regulon, edge_attributes=True, tf_target_keys=tf_target_keys)
+
+    if axs is None:
+        fig, axs = plt.subplots(dpi=dpi)
+
+    pos = nx.spring_layout(reg)
+
+    tf_bool = (np.array(reg.nodes) == tf)
+    node_cols = np.empty(reg.number_of_nodes(), dtype=object)
+    node_cols[tf_bool] = '#277bf580'  # rgba(39, 123, 245, 0.5)
+    node_cols[~tf_bool] = '#f5c82780'  # rgba(245, 200, 39, 0.5)
+    node_edge_cols = np.empty(reg.number_of_nodes(), dtype=object)
+    node_edge_cols[tf_bool] = '#00c100e6'
+    node_edge_cols[~tf_bool] = '#0000004d'
+    node_edge_widths = np.ones(reg.number_of_nodes())
+    node_edge_widths[tf_bool] *= 3
+
+    if regulon.shape[0] > 1:
+        edge_cols = regulon[sort_by].to_numpy()
+        edge_cols = - np.log10(edge_cols)
+        edge_cols = 0.1 + (edge_cols - edge_cols.min()) / (edge_cols.max() - edge_cols.min()) * (0.9 - 0.1)
+        ec_list = []
+        for ec in edge_cols:
+            ec_list.append((0, 0, 0, ec))
+    else:
+        ec_list = (0, 0, 0, 0.9)
+
+    nx.draw_networkx_nodes(reg, pos, node_size=node_size, node_color=node_cols, linewidths=node_edge_widths,
+                           edgecolors=node_edge_cols, alpha=0.8, ax=axs)
+    nx.draw_networkx_labels(reg, pos, font_size=font_size, font_color='black', ax=axs)
+    nx.draw_networkx_edges(reg, pos, width=2.0, edge_color=ec_list, node_size=node_size, ax=axs)
+
+    axs.spines['top'].set_visible(False)
+    axs.spines['right'].set_visible(False)
+    axs.spines['left'].set_visible(False)
+    axs.spines['bottom'].set_visible(False)
+
+    if title is not None:
+        axs.set_title(title)
+
+    plt.tight_layout()
+
+    if show:
+        plt.show()
 
 
 # Auxiliary ############################################################################################################
