@@ -7,7 +7,7 @@ dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_gnu
   - alsa-lib=1.2.12=h4ab18f5_0
-  - anndata=0.10.9=pyhd8ed1ab_0
+  - anndata=0.10.7=pyhd8ed1ab_0
   - arpack=3.8.0=nompi_h0baa96a_101
   - array-api-compat=1.9=pyhd8ed1ab_0
   - at-spi2-atk=2.38.0=h0630a04_3
