@@ -199,6 +199,7 @@ def plot_regulon(grn: pd.DataFrame,
                  pval_key: str = 'pvals_wy',
                  show: bool = False,
                  title: Union[str, None] = None,
+                 title_fontsize: Union[str, float, None] = None,
                  dpi: int = 100,
                  node_size: int = 600,
                  font_size: int = 9,
@@ -217,6 +218,8 @@ def plot_regulon(grn: pd.DataFrame,
         pval_key (str, optional): Column for p-values of edges. Defaults to 'pvals_wy'.
         show (bool, optional): If True, displays the plot. Defaults to False.
         title (Union[str, None], optional): Title for the plot. Defaults to None.
+        title_fontsize (Union[str, float, None]): Fontsize of the title, possible values are matplotlib fontsizes in the
+        form of a string or float. None corresponds to matplotlib's default fontsize. Defaults to None.
         dpi (int, optional): Resolution of the plot. Defaults to 100.
         node_size (int, optional): Size of the network nodes. Defaults to 600.
         font_size (int, optional): Font size for node labels. Defaults to 9.
@@ -278,7 +281,7 @@ def plot_regulon(grn: pd.DataFrame,
     nx.draw_networkx_nodes(reg, pos, node_size=node_size, node_color=node_cols, linewidths=node_edge_widths,
                            edgecolors=node_edge_cols, alpha=0.8, ax=axs)
     nx.draw_networkx_labels(reg, pos, font_size=font_size, font_color='black', ax=axs)
-    nx.draw_networkx_edges(reg, pos, width=2.0, edge_color=ec_list, node_size=node_size, ax=axs)
+    nx.draw_networkx_edges(reg, pos, width=4.0, edge_color=ec_list, node_size=node_size, ax=axs)
 
     axs.spines['top'].set_visible(False)
     axs.spines['right'].set_visible(False)
@@ -286,11 +289,10 @@ def plot_regulon(grn: pd.DataFrame,
     axs.spines['bottom'].set_visible(False)
 
     if title is not None:
-        axs.set_title(title)
-
-    plt.tight_layout()
+        axs.set_title(title, fontsize=title_fontsize)
 
     if show:
+        plt.tight_layout()
         plt.show()
 
 
