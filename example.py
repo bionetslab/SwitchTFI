@@ -1,9 +1,9 @@
 
-from src.data import erythrocytes, erythrocytes_grn
-from src.fit import fit_model
-from src.weight_fitting import calculate_weights
-from src.pvalue_calculation import compute_westfall_young_adjusted_pvalues, remove_insignificant_edges
-from src.tf_ranking import rank_tfs
+from switchtfi.data import erythrocytes, erythrocytes_grn
+from switchtfi.fit import fit_model
+from switchtfi.weight_fitting import calculate_weights
+from switchtfi.pvalue_calculation import compute_westfall_young_adjusted_pvalues, remove_insignificant_edges
+from switchtfi.tf_ranking import rank_tfs
 
 
 def main():
