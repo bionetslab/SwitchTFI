@@ -16,7 +16,7 @@ def main():
         plot_regulon
     )
 
-    tissue = 'alpha'  # 'ery', 'beta', 'alpha'
+    tissue = 'ery'  # 'ery', 'beta', 'alpha'
 
     # Load the preprocessed scRNA-seq data and GRN (previously inferred with the Scenic method)
     if tissue == 'ery':
