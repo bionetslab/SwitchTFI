@@ -26,16 +26,22 @@ conda activate switchtfi
 
 ## Usage
 All relevant functions are documented with docstring comments.
-For an example of how to use SwitchTFI for data analysis see **example.py**.
+For an example of how to use SwitchTFI for data analysis see **example.py**. To select an example dataset set the flag to *ery*, *beta*, or *alpha*. 
 
 ```bash
 # Run SwitchTFI analyses with the preprocessed scRNA-seq data and a previously inferred GRN as an input
-python example.py
+python example.py -d ery
 ```
 
 ## License
 
 This project is licensed under the MIT License - see the [GNU General Public License v3.0](LICENSE) file for details.
+
+## Citation
+
+If you use **SwitchTFI** in your research or publication, please cite the corresponding preprint:
+
+[https://doi.org/10.1101/2025.01.20.633856](https://doi.org/10.1101/2025.01.20.633856)
 
 ## Contact
 
