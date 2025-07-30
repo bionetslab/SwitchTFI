@@ -1,6 +1,6 @@
 
 
-def main():
+def main(dataset: str):
 
     import numpy as np
     import matplotlib.pyplot as plt
@@ -16,14 +16,12 @@ def main():
         plot_regulon
     )
 
-    tissue = 'ery'  # 'ery', 'beta', 'alpha'
-
     # Load the preprocessed scRNA-seq data and GRN (previously inferred with the Scenic method)
-    if tissue == 'ery':
+    if dataset == 'ery':
         data = erythrocytes()
         grn = erythrocytes_grn()
         prog_off_annotations_key = 'prog_off'
-    elif tissue == 'beta':
+    elif dataset == 'beta':
         data = preendocrine_beta()
         grn = preendocrine_beta_grn()
         prog_off_annotations_key = 'clusters'
@@ -97,6 +95,20 @@ def main():
 
 if __name__ == '__main__':
 
-    main()
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Run SwitchTFI analysis on selected tissue.')
+
+    parser.add_argument(
+        '-d', '--dataset',
+        type=str,
+        choices=['ery', 'beta', 'alpha'],
+        default='ery',
+        help='Dataset to run the analysis on: "ery", "beta", or "alpha"'
+    )
+
+    args = parser.parse_args()
+
+    main(dataset=args.dataset)
 
     print('done')
