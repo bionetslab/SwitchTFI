@@ -1,8 +1,24 @@
+
 import pandas as pd
 import scanpy as sc
 import pkg_resources
 import lzma
 import pickle
+
+
+def _load_anndata(filename_base: str) -> sc.AnnData:
+
+    h5ad_path = pkg_resources.resource_filename(__name__, f'd/{filename_base}.h5ad')
+    compressed_path = pkg_resources.resource_filename(__name__, f'd/{filename_base}.pickle.xz')
+
+    try:
+        adata = sc.read_h5ad(h5ad_path)
+    except FileNotFoundError:
+        with lzma.open(compressed_path, 'rb') as f:
+            adata = pickle.load(f)
+        sc.write(h5ad_path, adata)
+
+    return adata
 
 
 def preendocrine_alpha() -> sc.AnnData:
@@ -16,14 +32,7 @@ def preendocrine_alpha() -> sc.AnnData:
     Returns:
         sc.AnnData: The pre-endocrine alpha AnnData object.
     """
-    try:
-        ad = sc.read_h5ad(pkg_resources.resource_filename(__name__, '/d/pre-endocrine_alpha.h5ad'))
-    except FileNotFoundError:
-        # Deserialize (unpickle) and decompress the AnnData object
-        with lzma.open(pkg_resources.resource_filename(__name__, '/d/pre-endocrine_alpha.pickle.xz'), 'rb') as f:
-            ad = pickle.load(f)
-        sc.write(pkg_resources.resource_filename(__name__, '/d/pre-endocrine_alpha.h5ad'), ad)
-    return ad
+    return _load_anndata(filename_base='pre-endocrine_alpha')
 
 
 def preendocrine_beta() -> sc.AnnData:
@@ -35,16 +44,9 @@ def preendocrine_beta() -> sc.AnnData:
     then saves it as an `.h5ad` file for future use.
 
     Returns:
-        sc.AnnData: The pre-endocrine alpha AnnData object.
+        sc.AnnData: The pre-endocrine beta AnnData object.
     """
-    try:
-        ad = sc.read_h5ad(pkg_resources.resource_filename(__name__, '/d/pre-endocrine_beta.h5ad'))
-    except FileNotFoundError:
-        # Deserialize (unpickle) and decompress the AnnData object
-        with lzma.open(pkg_resources.resource_filename(__name__, '/d/pre-endocrine_beta.pickle.xz'), 'rb') as f:
-            ad = pickle.load(f)
-        sc.write(pkg_resources.resource_filename(__name__, '/d/pre-endocrine_beta.h5ad'), ad)
-    return ad
+    return _load_anndata(filename_base='pre-endocrine_beta')
 
 
 def erythrocytes() -> sc.AnnData:
@@ -56,16 +58,9 @@ def erythrocytes() -> sc.AnnData:
     then saves it as an `.h5ad` file for future use.
 
     Returns:
-        sc.AnnData: The pre-endocrine alpha AnnData object.
+        sc.AnnData: The erythrocyte AnnData object.
     """
-    try:
-        ad = sc.read_h5ad(pkg_resources.resource_filename(__name__, '/d/erythrocytes.h5ad'))
-    except FileNotFoundError:
-        # Deserialize (unpickle) and decompress the AnnData object
-        with lzma.open(pkg_resources.resource_filename(__name__, '/d/erythrocytes.pickle.xz'), 'rb') as f:
-            ad = pickle.load(f)
-        sc.write(pkg_resources.resource_filename(__name__, '/d/erythrocytes.h5ad'), ad)
-    return ad
+    return _load_anndata(filename_base='erythrocytes')
 
 
 def preendocrine_alpha_grn() -> pd.DataFrame:
@@ -76,7 +71,7 @@ def preendocrine_alpha_grn() -> pd.DataFrame:
         pd.DataFrame: The GRN as an edge-list.
     """
     return pd.read_csv(
-        pkg_resources.resource_filename(__name__, '/d/ngrnthresh9_alpha_pyscenic_combined_grn.csv'), index_col=0
+        pkg_resources.resource_filename(__name__, 'd/ngrnthresh9_alpha_pyscenic_combined_grn.csv'), index_col=0
     )
 
 
@@ -88,7 +83,7 @@ def preendocrine_beta_grn() -> pd.DataFrame:
         pd.DataFrame: The GRN as an edge-list.
     """
     return pd.read_csv(
-        pkg_resources.resource_filename(__name__, '/d/ngrnthresh9_beta_pyscenic_combined_grn.csv'), index_col=0
+        pkg_resources.resource_filename(__name__, 'd/ngrnthresh9_beta_pyscenic_combined_grn.csv'), index_col=0
     )
 
 
@@ -100,5 +95,5 @@ def erythrocytes_grn() -> pd.DataFrame:
         pd.DataFrame: The GRN as an edge-list.
     """
     return pd.read_csv(
-        pkg_resources.resource_filename(__name__, '/d/ngrnthresh9_erythrocytes_pyscenic_combined_grn.csv'), index_col=0
+        pkg_resources.resource_filename(__name__, 'd/ngrnthresh9_erythrocytes_pyscenic_combined_grn.csv'), index_col=0
     )

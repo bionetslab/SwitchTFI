@@ -48,8 +48,8 @@ def labels_to_bool(clustering: np.ndarray) -> np.ndarray:
     return cluster_bool
 
 
-def solve_lsap(clust1: np.ndarray,
-               clust2: np.ndarray) -> float:
+def solve_lsap(clust1: np.ndarray, clust2: np.ndarray) -> float:
+
     # Solve (trivial, only 2 possible cases) LSAP problem => Similarity score for the 2 clusterings
     # Case 1: L-C1, R-C2
     case1_ji1 = calc_ji(a=clust1, b=clust2)
@@ -66,8 +66,8 @@ def solve_lsap(clust1: np.ndarray,
     return weight
 
 
-def calc_ji(a: np.ndarray,
-            b: np.ndarray) -> float:
+def calc_ji(a: np.ndarray, b: np.ndarray) -> float:
+
     # JI(A, B) = #(A \cap B) / #(A \cup B) \in [0,1]
     # True entries in vector indicate that cell is contained in set
     assert a.dtype == 'bool' and b.dtype == 'bool', 'Arrays must be bool arrays'
@@ -141,4 +141,35 @@ def get_regulons(grn: pd.DataFrame,
         regulon_dict[gene] = dummy
 
     return regulon_dict
+
+
+def align_anndata_grn(
+        adata: sc.AnnData,
+        grn: pd.DataFrame,
+        tf_target_keys: Tuple[str, str] = ('TF', 'target')
+) -> Tuple[sc.AnnData, pd.DataFrame]:
+    """
+    Aligns the tabular scRNA-seq data with the input GRN such that only genes that are present in both remain.
+    Args:
+        adata (sc.AnnData): The input AnnData object containing gene expression data.
+        grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
+        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+    Returns:
+        Tuple[sc.AnnData, pd.DataFrame]: The aligned AnnData and DataFrame.
+    """
+
+    adata_genes = adata.var_names.to_numpy()
+    grn_genes = np.unique(grn[list(tf_target_keys)].to_numpy())
+
+    # Subset adata to genes that appear in GRN
+    b = np.isin(adata_genes, grn_genes)
+    adata = adata[:, b].copy()
+
+    # Subset GRN to genes that appear in adata
+    tf_bool = np.isin(grn[tf_target_keys[0]].to_numpy(), adata_genes)
+    target_bool = np.isin(grn[tf_target_keys[1]].to_numpy(), adata_genes)
+    grn_bool = tf_bool * target_bool
+    grn = grn[grn_bool].copy()
+
+    return adata, grn
 

@@ -1,19 +1,21 @@
 
+import os
 import numpy as np
 import pandas as pd
 import networkx as nx
-import os
 
 from typing import *
 
 
-def calculate_centrality_nx(grn: pd.DataFrame,
-                            centrality_measure: str = 'pagerank',
-                            reverse: bool = True,
-                            undirected: bool = False,
-                            weight_key: Union[str, None] = 'weight',
-                            tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-                            **kwargs) -> Tuple[pd.DataFrame, nx.DiGraph]:
+def calculate_centrality_nx(
+        grn: pd.DataFrame,
+        centrality_measure: str = 'pagerank',
+        reverse: bool = True,
+        undirected: bool = False,
+        weight_key: Union[str, None] = 'weight',
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        **kwargs
+) -> Tuple[pd.DataFrame, nx.DiGraph]:
     """
     Calculate centrality values for nodes in the GRN using NetworkX.
 
@@ -23,23 +25,25 @@ def calculate_centrality_nx(grn: pd.DataFrame,
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        centrality_measure (str, optional): The centrality measure to compute ('pagerank', 'out_degree', 'eigenvector', etc.).
-            Defaults to 'pagerank'.
-        reverse (bool, optional): Whether to reverse the direction of edges in the graph. Defaults to True.
-        undirected (bool, optional): Whether to treat the graph as undirected. Defaults to False.
-        weight_key (Union[str, None], optional): The key for edge weights in the GRN. Defaults to 'weight'.
-        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
+        centrality_measure (str): The centrality measure to compute. Defaults to 'pagerank'.
+        reverse (bool): Whether to reverse the direction of edges in the graph. Defaults to True.
+        undirected (bool): Whether to treat the graph as undirected. Defaults to False.
+        weight_key (str, optional): The key for edge weights in the GRN. None corresponds to the unweighted case. Defaults to 'weight'.
+        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ('TF', 'target').
         **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
 
     Returns:
         Tuple[pd.DataFrame, nx.DiGraph]: A DataFrame with genes and their centrality scores, and the NetworkX graph.
     """
 
+    # Calculate the score
     if weight_key not in grn.columns and weight_key == 'score':
         weights = grn['weight'].to_numpy()
         pvals = grn['pvals_wy'].to_numpy()
         pvals += np.finfo(np.float64).eps
         grn['score'] = -np.log10(pvals) * weights
+
+    # calculate the -log-transformed p-values
     elif weight_key not in grn.columns and weight_key == '-log_pvals':
         pvals = grn['pvals_wy'].to_numpy()
         pvals += np.finfo(np.float64).eps
@@ -73,19 +77,19 @@ def calculate_centrality_nx(grn: pd.DataFrame,
     else:
         vertex_centrality_dict = {}
 
-    # Assign pagerank values as node attributes
-    nx.set_node_attributes(g, vertex_centrality_dict, name='pagerank')
+    # Assign centrality values as node attributes
+    nx.set_node_attributes(g, vertex_centrality_dict, name=f'{centrality_measure}_centrality')
 
-    # Store pagerank values in pandas dataframe
+    # Store centrality values in pandas dataframe
     gene_list = [None] * len(vertex_centrality_dict)
-    pagerank_list = [None] * len(vertex_centrality_dict)
-    for i, (gene, pr_val) in enumerate(vertex_centrality_dict.items()):
+    centrality_list = [None] * len(vertex_centrality_dict)
+    for i, (gene, centrality_value) in enumerate(vertex_centrality_dict.items()):
         gene_list[i] = gene
-        pagerank_list[i] = pr_val
+        centrality_list[i] = centrality_value
 
     gene_pr_df = pd.DataFrame()
     gene_pr_df['gene'] = gene_list
-    gene_pr_df[centrality_measure] = pagerank_list
+    gene_pr_df[centrality_measure] = centrality_list
 
     # Sort dataframe
     gene_pr_df = gene_pr_df.sort_values([centrality_measure], axis=0, ascending=False)
@@ -94,15 +98,19 @@ def calculate_centrality_nx(grn: pd.DataFrame,
     return gene_pr_df, g
 
 
-def rank_tfs(grn: pd.DataFrame,
-             centrality_measure: str = 'pagerank',
-             reverse: bool = True,
-             undirected: bool = False,
-             weight_key: Union[str, None] = None,
-             result_folder: Union[str, None] = None,
-             tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-             fn_prefix: Union[str, None] = None,
-             **kwargs) -> pd.DataFrame:
+def rank_tfs(
+        grn: pd.DataFrame,
+        centrality_measure: Literal[
+            'pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank', 'katz'
+        ] = 'pagerank',
+        reverse: bool = True,
+        undirected: bool = False,
+        weight_key: Union[str, None] = None,
+        result_folder: Union[str, None] = None,
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        fn_prefix: Union[str, None] = None,
+        **kwargs
+) -> pd.DataFrame:
     """
     Rank transcription factors (TFs) in the GRN based on their centrality in the network.
 
@@ -113,26 +121,26 @@ def rank_tfs(grn: pd.DataFrame,
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        centrality_measure (str, optional): The centrality measure to use for ranking ('pagerank', 'out_degree', etc.).
-            Defaults to 'pagerank'.
-        reverse (bool, optional): Whether to reverse the direction of edges in the graph. Defaults to True.
-        undirected (bool, optional): Whether to treat the graph as undirected. Defaults to False.
-        weight_key (Union[str, None], optional): The key for edge weights in the GRN. If the key 'score' is passed
-            and does not already exist in the GRN, then the weight is computed as the score = -log10(p-vals) * weight.
-            Defaults to None.
-        result_folder (Union[str, None], optional): Folder to save the ranked TFs. Defaults to None.
-        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
-        fn_prefix (Union[str, None], optional): Optional filename prefix for saving results. Defaults to None.
+        centrality_measure (Literal['pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank', 'katz']): The centrality measure to use for ranking. Defaults to 'pagerank'.
+        reverse (bool): Whether to reverse the direction of edges in the graph. Defaults to True.
+        undirected (bool): Whether to treat the graph as undirected. Defaults to False.
+        weight_key (str, optional): The key for edge weights in the GRN. None corresponds to the unweighted case. If the key 'score' is passed and does not already exist in the GRN, then the weight is computed as the score = -log10(p-vals) * weight. Defaults to None.
+        result_folder (str, optional): Folder to save the ranked TFs. Defaults to None.
+        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ('TF', 'target').
+        fn_prefix (str, optional): Optional filename prefix for saving results. Defaults to None.
         **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
 
     Returns:
         pd.DataFrame: A DataFrame of ranked transcription factors based on the selected centrality measure.
     """
 
-    assert centrality_measure in {'pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank',
-                                  'katz'}, \
-        "The 'centrality_measure' can be: 'pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', " \
-        "'voterank', 'katz'"
+    if centrality_measure not in {
+        'pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank', 'katz'
+    }:
+        raise ValueError(
+            "The 'centrality_measure' must be one of: "
+            "'pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank', 'katz'"
+        )
 
     # Compute pagerank of all genes in GRN
     gene_pr_df, _ = calculate_centrality_nx(grn=grn,
@@ -162,9 +170,11 @@ def rank_tfs(grn: pd.DataFrame,
 
 
 # Auxiliary ############################################################################################################
-def grn_to_nx(grn: pd.DataFrame,
-              edge_attributes: Union[str, Tuple[str], bool, None] = 'weight',  # If True all columns will be added
-              tf_target_keys: Tuple[str, str] = ('TF', 'target')) -> nx.DiGraph:
+def grn_to_nx(
+        grn: pd.DataFrame,
+        edge_attributes: Union[str, Tuple[str], bool, None] = 'weight',  # If True all columns will be added
+        tf_target_keys: Tuple[str, str] = ('TF', 'target')
+) -> nx.DiGraph:
     """
     Convert a GRN DataFrame into a NetworkX graph.
 
@@ -173,9 +183,8 @@ def grn_to_nx(grn: pd.DataFrame,
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        edge_attributes (Union[str, Tuple[str], bool, None], optional): Edge attributes to include in the graph.
-            If True, all columns are added. Defaults to 'weight'.
-        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
+        edge_attributes (Union[str, Tuple[str], bool], optional): Edge attributes to include in the graph. If True, all columns are added. Defaults to 'weight'.
+        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ('TF', 'target').
 
     Returns:
         nx.DiGraph: A NetworkX directed graph representing the GRN.
@@ -184,10 +193,12 @@ def grn_to_nx(grn: pd.DataFrame,
     if isinstance(edge_attributes, str):
         edge_attributes = (edge_attributes, )
 
-    network = nx.from_pandas_edgelist(df=grn,
-                                      source=tf_target_keys[0],
-                                      target=tf_target_keys[1],
-                                      edge_attr=edge_attributes,
-                                      create_using=nx.DiGraph())
+    network = nx.from_pandas_edgelist(
+        df=grn,
+        source=tf_target_keys[0],
+        target=tf_target_keys[1],
+        edge_attr=edge_attributes,
+        create_using=nx.DiGraph()
+    )
 
     return network

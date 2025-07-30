@@ -1,5 +1,7 @@
 
 import os
+import warnings
+
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -12,14 +14,16 @@ from sklearn.tree import DecisionTreeRegressor
 from .utils import csr_to_numpy, labels_to_bool, solve_lsap
 
 
-def fit_regression_stump_model(adata: sc.AnnData,
-                               grn: pd.DataFrame,
-                               layer_key: Union[str, None] = None,
-                               result_folder: Union[str, None] = None,
-                               new_key: str = 'weight',
-                               clustering_obs_key: str = 'clusters',
-                               tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-                               fn_prefix: Union[str, None] = None) -> pd.DataFrame:
+def fit_regression_stump_model(
+        adata: sc.AnnData,
+        grn: pd.DataFrame,
+        layer_key: Union[str, None] = None,
+        result_folder: Union[str, None] = None,
+        new_key: str = 'weight',
+        clustering_obs_key: str = 'clusters',
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        fn_prefix: Union[str, None] = None
+) -> pd.DataFrame:
     """
     Fit a regression stump model to each TF-target-edge in a GRN to infer the corresponding weight.
 
@@ -32,13 +36,12 @@ def fit_regression_stump_model(adata: sc.AnnData,
     Args:
         adata (sc.AnnData): The input AnnData object with scRNA-seq data.
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        layer_key (Union[str, None], optional): The key for the expression data layer in AnnData. Defaults to None.
-        result_folder (Union[str, None], optional): Folder to save the resulting GRN. Defaults to None.
-        new_key (str, optional): The column name in GRN to store calculated weights. Defaults to 'weight'.
-        clustering_obs_key (str, optional): The key in `adata.obs` representing cluster labels. Defaults to 'clusters'.
-        tf_target_keys (Tuple[str, str], optional): Column names in GRN representing TFs and targets.
-            Defaults to ('TF', 'target').
-        fn_prefix (Union[str, None], optional): Optional filename prefix when saving results. Defaults to None.
+        layer_key (str, optional): The key for the expression data layer in AnnData. Defaults to None.
+        result_folder (str, optional): Folder to save the resulting GRN. Defaults to None.
+        new_key (str): The column name in GRN to store calculated weights. Defaults to 'weight'.
+        clustering_obs_key (str): The key in `adata.obs` representing cluster labels. Defaults to 'clusters'.
+        tf_target_keys (Tuple[str, str]): Column names in GRN representing TFs and targets. Defaults to ('TF', 'target').
+        fn_prefix (str, optional): Optional filename prefix when saving results. Defaults to None.
 
     Returns:
         pd.DataFrame: The updated GRN DataFrame with calculated weights for each TF-target pair.
@@ -56,9 +59,11 @@ def fit_regression_stump_model(adata: sc.AnnData,
     weights = [np.nan] * n_edges  # Store calculated weight for edges
 
     # Initialize decision tree regressor
-    dt_regressor = DecisionTreeRegressor(criterion='squared_error',  # = variance (mean of values is prediction)
-                                         splitter='best',  # unnecessary, have only one feature
-                                         max_depth=1)
+    dt_regressor = DecisionTreeRegressor(
+        criterion='squared_error',  # = variance (mean of values is prediction)
+        splitter='best',  # unnecessary, have only one feature
+        max_depth=1
+    )
 
     for i in tqdm(range(n_edges), total=n_edges):
         # Get gene names of TF and target
@@ -75,7 +80,11 @@ def fit_regression_stump_model(adata: sc.AnnData,
                 y = csr_to_numpy(adata[:, target].layers[layer_key]).flatten()
         except KeyError:
             weights[i] = 0
-            print(f'WARNING: one of TF: {tf}, target: {target} appears in the GRN, but not in the Anndata object')
+            warnings.warn(
+                f'One of TF: {tf}, target: {target} appears in the GRN, but not in the Anndata object. '
+                f'Setting {tf}-{target} edge weight to 0.',
+                UserWarning
+            )
             continue
 
         # Remove cells for which expression of TF and target is 0
@@ -110,9 +119,11 @@ def fit_regression_stump_model(adata: sc.AnnData,
             pred_r[i] = dt_regressor.tree_.value[2].flatten()[0]
 
         # Calculate predicted clusters L, R and resulting weight
-        weights[i], dt_reg_clusterings[i] = calculate_weight(x_tf=x.flatten(),
-                                                             threshold=thresholds[i],
-                                                             labels=labels)
+        weights[i], dt_reg_clusterings[i] = calculate_weight(
+            x_tf=x.flatten(),
+            threshold=thresholds[i],
+            labels=labels
+        )
 
     grn['cell_bool'] = cell_bools
     grn['threshold'] = thresholds
@@ -134,12 +145,14 @@ def fit_regression_stump_model(adata: sc.AnnData,
     return grn
 
 
-def prune_special_cases(grn: pd.DataFrame,
-                        result_folder: Union[str, None] = None,
-                        weight_key: str = 'weight',
-                        verbosity: int = 0,
-                        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-                        fn_prefix: Union[str, None] = None) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def prune_special_cases(
+        grn: pd.DataFrame,
+        result_folder: Union[str, None] = None,
+        weight_key: str = 'weight',
+        verbosity: int = 0,
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        fn_prefix: Union[str, None] = None
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     Prune edges from the GRN where no sensible weight could be fit.
 
@@ -149,11 +162,11 @@ def prune_special_cases(grn: pd.DataFrame,
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
-        result_folder (Union[str, None], optional): Folder to save the pruned GRN and special cases. Defaults to None.
-        weight_key (str, optional): Column name representing the edge weight. Defaults to 'weight'.
-        verbosity (int, optional): Level of logging. Defaults to 0.
-        tf_target_keys (Tuple[str, str], optional): Column names for TF and target genes. Defaults to ('TF', 'target').
-        fn_prefix (Union[str, None], optional): Optional filename prefix for saving the output. Defaults to None.
+        result_folder (str, optional): Folder to save the pruned GRN and special cases. Defaults to None.
+        weight_key (str): Column name representing the edge weight. Defaults to 'weight'.
+        verbosity (int): Level of logging. Defaults to 0.
+        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ('TF', 'target').
+        fn_prefix (str, optional): Optional filename prefix for saving the output. Defaults to None.
 
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: The pruned GRN and the DataFrame of edges removed due to special cases.
@@ -190,14 +203,16 @@ def prune_special_cases(grn: pd.DataFrame,
     return grn, same_label_pairs
 
 
-def prune_wrt_n_cells(grn: pd.DataFrame,
-                      mode: str = 'percent',  # 'quantile'
-                      threshold: float = 0.05,
-                      result_folder: Union[str, None] = None,
-                      cell_bool_key: str = 'cell_bool',
-                      verbosity: int = 0,
-                      plot: bool = False,
-                      fn_prefix: Union[str, None] = None) -> pd.DataFrame:
+def prune_wrt_n_cells(
+        grn: pd.DataFrame,
+        mode: Literal['percent', 'quantile'] = 'percent',  # 'quantile'
+        threshold: float = 0.05,
+        result_folder: Union[str, None] = None,
+        cell_bool_key: str = 'cell_bool',
+        verbosity: int = 0,
+        plot: bool = False,
+        fn_prefix: Union[str, None] = None
+) -> pd.DataFrame:
     """
     Prune edges from the GRN where too few cells were used during weight fitting.
 
@@ -207,21 +222,20 @@ def prune_wrt_n_cells(grn: pd.DataFrame,
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
-        mode (str, optional): The mode of pruning, either 'percent' or 'quantile'. Defaults to 'percent'.
-        threshold (float, optional): The threshold for pruning edges. Defaults to 0.05.
-        result_folder (Union[str, None], optional): Folder to save the pruned GRN. Defaults to None.
-        cell_bool_key (str, optional): The column in GRN representing which cells were used for fitting.
-            Defaults to 'cell_bool'.
-        verbosity (int, optional): Level of logging. Defaults to 0.
-        plot (bool, optional): Whether to plot the distribution of cell counts used for fitting. Defaults to False.
-        fn_prefix (Union[str, None], optional): Optional filename prefix when saving results. Defaults to None.
+        mode (Literal['percent', 'quantile']): The mode of pruning. Defaults to 'percent'.
+        threshold (float): The threshold for pruning edges. Defaults to 0.05.
+        result_folder (str, optional): Folder to save the pruned GRN. Defaults to None.
+        cell_bool_key (str): The column in GRN with bool arrays encoding which cells were used for fitting. Defaults to 'cell_bool'.
+        verbosity (int): Level of logging. Defaults to 0.
+        plot (bool): Whether to plot the distribution of cell counts used for fitting. Defaults to False.
+        fn_prefix (str, optional): Optional filename prefix when saving results. Defaults to None.
 
     Returns:
         pd.DataFrame: The pruned GRN DataFrame with edges removed based on cell count criteria.
     """
 
     # Remove edges from GRN for which too few cells were used for fitting the weight
-    # -> 'quantile': remove threshold-quantile of edges with fewest cells
+    # -> 'quantile': remove threshold-quantile of edges with fewest cells, e.g. thresh=0.05, remove up to 0.5 quantile
     # -> 'percent': remove edges with less than threshold percent of the possible max n-cells
 
     n_edges_before = grn.shape[0]
@@ -242,7 +256,7 @@ def prune_wrt_n_cells(grn: pd.DataFrame,
         keep_bool = (n_cells > q)
 
     else:
-        keep_bool = np.zeros(n_edges_before).astype(bool)
+        raise ValueError('Mode must be either "percent" or "quantile".')
 
     if plot:
         # Plot n-cell distribution
@@ -275,17 +289,19 @@ def prune_wrt_n_cells(grn: pd.DataFrame,
     return grn
 
 
-def calculate_weights(adata: sc.AnnData,
-                      grn: pd.DataFrame,
-                      layer_key: Union[str, None] = None,
-                      result_folder: Union[str, None] = None,
-                      new_key: str = 'weight',
-                      n_cell_pruning_params: Union[Tuple[str, float], None] = ('percent', 0.2),
-                      clustering_obs_key: str = 'clusters',
-                      tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-                      verbosity: int = 0,
-                      plot: bool = False,
-                      fn_prefix: Union[str, None] = None) -> pd.DataFrame:
+def calculate_weights(
+        adata: sc.AnnData,
+        grn: pd.DataFrame,
+        layer_key: Union[str, None] = None,
+        result_folder: Union[str, None] = None,
+        new_key: str = 'weight',
+        n_cell_pruning_params: Union[Tuple[str, float], None] = ('percent', 0.2),
+        clustering_obs_key: str = 'clusters',
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        verbosity: int = 0,
+        plot: bool = False,
+        fn_prefix: Union[str, None] = None
+) -> pd.DataFrame:
     """
     Calculate weights for GRN edges and prune edges based on special cases and cell count.
 
@@ -296,56 +312,66 @@ def calculate_weights(adata: sc.AnnData,
     Args:
         adata (sc.AnnData): The input AnnData object with gene expression data.
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
-        layer_key (Union[str, None], optional): The key for the expression data layer in AnnData. Defaults to None.
-        result_folder (Union[str, None], optional): Folder to save the final weighted GRN. Defaults to None.
-        new_key (str, optional): The column name in GRN to store the calculated weights. Defaults to 'weight'.
-        n_cell_pruning_params (Union[Tuple[str, float], None], optional): Parameters for pruning based on cell
-            count per edge. Defaults to ('percent', 0.2).
-        clustering_obs_key (str, optional): The key in `adata.obs` representing cluster labels. Defaults to 'clusters'.
-        tf_target_keys (Tuple[str, str], optional): Column names in GRN representing TFs and targets.
-            Defaults to ('TF', 'target').
-        verbosity (int, optional): Level of logging. Defaults to 0.
-        plot (bool, optional): Whether to plot results of pruning. Defaults to False.
-        fn_prefix (Union[str, None], optional): Optional filename prefix when saving results. Defaults to None.
+        layer_key (str, optional): The key for the expression data layer in AnnData. Defaults to None.
+        result_folder (str, optional): Folder to save the final weighted GRN. Defaults to None.
+        new_key (str): The column name in GRN to store the calculated weights. Defaults to 'weight'.
+        n_cell_pruning_params (Tuple[str, float], optional): Parameters for pruning based on cell count per edge. Defaults to ('percent', 0.2).
+        clustering_obs_key (str): The key in `adata.obs` representing cluster labels. Defaults to 'clusters'.
+        tf_target_keys (Tuple[str, str]): Column names in GRN representing TFs and targets. Defaults to ('TF', 'target').
+        verbosity (int): Level of logging. Defaults to 0.
+        plot (bool): Whether to plot results of pruning. Defaults to False.
+        fn_prefix (str, optional): Optional filename prefix when saving results. Defaults to None.
 
     Returns:
-        pd.DataFrame: The final GRN DataFrame with calculated weights and pruned edges.
+        pd.DataFrame: The final GRN DataFrame with calculated weights and all edges removed for which no weight fitting was possible.
     """
 
-    grn = fit_regression_stump_model(adata=adata,
-                                     grn=grn,
-                                     layer_key=layer_key,
-                                     result_folder=result_folder,
-                                     new_key=new_key,
-                                     clustering_obs_key=clustering_obs_key,
-                                     tf_target_keys=tf_target_keys,
-                                     fn_prefix=fn_prefix)
+    grn = fit_regression_stump_model(
+        adata=adata,
+        grn=grn,
+        layer_key=layer_key,
+        result_folder=result_folder,
+        new_key=new_key,
+        clustering_obs_key=clustering_obs_key,
+        tf_target_keys=tf_target_keys,
+        fn_prefix=fn_prefix
+    )
 
     # Weights are in [0,1] \cup {-1} \cup {2},
-    # with w=-1 <=> pathological case, w=2 <=> all cells for which TF, target are non-zero have the same label
-    grn, _ = prune_special_cases(grn=grn,
-                                 result_folder=result_folder,
-                                 weight_key=new_key,
-                                 verbosity=verbosity,
-                                 tf_target_keys=tf_target_keys,
-                                 fn_prefix=fn_prefix)
+    # with
+    # - w=-1 <=> pathological case
+    # - w=2 <=> all cells for which TF, target are non-zero have the same label,
+    #           i.e. edge only relevant in either progenitor or offspring cluster, not relevant for transition
+    grn, _ = prune_special_cases(
+        grn=grn,
+        result_folder=result_folder,
+        weight_key=new_key,
+        verbosity=verbosity,
+        tf_target_keys=tf_target_keys,
+        fn_prefix=fn_prefix
+    )
 
     if n_cell_pruning_params is not None:
 
-        grn = prune_wrt_n_cells(grn=grn,
-                                mode=n_cell_pruning_params[0],
-                                threshold=n_cell_pruning_params[1],
-                                result_folder=result_folder,
-                                cell_bool_key='cell_bool',
-                                verbosity=verbosity,
-                                plot=plot,
-                                fn_prefix=fn_prefix)
+        grn = prune_wrt_n_cells(
+            grn=grn,
+            mode=n_cell_pruning_params[0],
+            threshold=n_cell_pruning_params[1],
+            result_folder=result_folder,
+            cell_bool_key='cell_bool',
+            verbosity=verbosity,
+            plot=plot,
+            fn_prefix=fn_prefix
+        )
+
     return grn
 
 
 # Auxiliary functions ##################################################################################################
-def remove_double_zero_cells(x: np.ndarray,
-                             y: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def remove_double_zero_cells(
+        x: np.ndarray,
+        y: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Remove cells where both the TF and target gene expression are zero.
 
@@ -366,9 +392,11 @@ def remove_double_zero_cells(x: np.ndarray,
     return x[keep_bool], y[keep_bool], keep_bool
 
 
-def check_for_pathological_cases(x: np.ndarray,
-                                 y: np.ndarray,
-                                 labels: np.ndarray) -> Tuple[bool, bool]:
+def check_for_pathological_cases(
+        x: np.ndarray,
+        y: np.ndarray,
+        labels: np.ndarray
+) -> Tuple[bool, bool]:
     """
     Check for pathological cases in the TF-target gene relationship.
 
@@ -403,9 +431,11 @@ def check_for_pathological_cases(x: np.ndarray,
     return pathological, same_label
 
 
-def calculate_weight(x_tf: np.ndarray,
-                     threshold: float,
-                     labels: np.ndarray) -> Tuple[float, np.ndarray]:
+def calculate_weight(
+        x_tf: np.ndarray,
+        threshold: float,
+        labels: np.ndarray
+) -> Tuple[float, np.ndarray]:
     """
     Calculate the weight for a TF-target gene pair based on clustering similarity.
 
@@ -430,7 +460,9 @@ def calculate_weight(x_tf: np.ndarray,
 
     # Solve (trivial, only 2 possible cases) linear sum assignement problem (LSAP)
     # => Similarity score for the 2 clusterings (clustering1 = dt_reg, clustering2 = cell_stage)
-    weight = solve_lsap(clust1=clustering_dt_regression,
-                        clust2=clustering_cell_stage)
+    weight = solve_lsap(
+        clust1=clustering_dt_regression,
+        clust2=clustering_cell_stage
+    )
 
     return weight, clustering_cell_stage

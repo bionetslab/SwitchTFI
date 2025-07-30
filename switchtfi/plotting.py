@@ -2,8 +2,8 @@
 import os
 import sys
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
+import matplotlib.pyplot as plt
 import graph_tool.all as gt
 import networkx as nx
 
@@ -13,14 +13,16 @@ from PIL import Image, ImageChops
 from .tf_ranking import grn_to_nx
 
 
-def plot_grn(grn: pd.DataFrame,
-             gene_centrality_df: Union[pd.DataFrame, None] = None,
-             plot_folder: Union[str, None] = None,
-             weight_key: str = 'weight',
-             pval_key: str = 'pvals_wy',
-             tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-             axs: Union[plt.Axes, None] = None,
-             **kwargs):
+def plot_grn(
+        grn: pd.DataFrame,
+        gene_centrality_df: Union[pd.DataFrame, None] = None,
+        plot_folder: Union[str, None] = None,
+        weight_key: str = 'weight',
+        pval_key: str = 'pvals_wy',
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        ax: Union[plt.Axes, None] = None,
+        **kwargs
+):
     """
     Plot the gene regulatory network (GRN) and visualize transcription factor (TF) rankings.
 
@@ -33,23 +35,25 @@ def plot_grn(grn: pd.DataFrame,
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        gene_centrality_df (Union[pd.DataFrame, None], optional): A DataFrame of gene centrality rankings. Defaults to None.
-        plot_folder (Union[str, None], optional): Folder to save the plot. Defaults to None.
-        weight_key (str, optional): Column name representing edge weights in the GRN. Defaults to 'weight'.
-        pval_key (str, optional): Column name representing p-values for edges in the GRN. Defaults to 'pvals_wy'.
-        tf_target_keys (Tuple[str, str], optional): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
-        axs (Union[plt.Axes, None], optional): Matplotlib axis to display the plot. Defaults to None.
+        gene_centrality_df (pd.DataFrame, optional): A DataFrame of gene centrality rankings. Defaults to None.
+        plot_folder (str, optional): Folder to save the plot. Defaults to None.
+        weight_key (str): Column name representing edge weights in the GRN. Defaults to 'weight'.
+        pval_key (str): Column name representing p-values for edges in the GRN. Defaults to 'pvals_wy'.
+        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+        ax (plt.Axes, optional): Matplotlib axis to display the plot. Defaults to None.
         **kwargs: Additional arguments, such as `fn_prefix` for filename prefixes.
 
     Returns:
         None: The function saves the plot to the specified folder and optionally displays it in a matplotlib axis.
     """
 
-    g = grn_to_gt(grn=grn,
-                  gene_centrality_df=gene_centrality_df,
-                  weight_key=weight_key,
-                  pval_key=pval_key,
-                  tf_target_keys=tf_target_keys)
+    g = grn_to_gt(
+        grn=grn,
+        gene_centrality_df=gene_centrality_df,
+        weight_key=weight_key,
+        pval_key=pval_key,
+        tf_target_keys=tf_target_keys
+    )
 
     if plot_folder is None:
         plot_folder = './'
@@ -86,9 +90,11 @@ def plot_grn(grn: pd.DataFrame,
     else:
         p = np.ones(shape=p.shape) * 0.5
 
-    p = get_rgba_color_gradient(rgba1=[0, 0, 0, 0.7],
-                                rgba2=[0, 0, 0, 0.1],
-                                values=np.array(p))
+    p = get_rgba_color_gradient(
+        rgba1=[0, 0, 0, 0.7],
+        rgba2=[0, 0, 0, 0.1],
+        values=np.array(p)
+    )
 
     e_color = g.new_ep('vector<long double>')
     for i, e in enumerate(g.edges()):
@@ -114,9 +120,11 @@ def plot_grn(grn: pd.DataFrame,
 
         tf_rgba0 = [19, 0, 255, 0.9]
         tf_rgba1 = [0, 255, 231, 0.3]
-        tf_cols = get_rgba_color_gradient(rgba1=tf_rgba0,
-                                          rgba2=tf_rgba1,
-                                          values=int(tf_bool.sum()))
+        tf_cols = get_rgba_color_gradient(
+            rgba1=tf_rgba0,
+            rgba2=tf_rgba1,
+            values=int(tf_bool.sum())
+        )
 
     for v in g.vertices():
         if not g.vp['tf'][v]:
@@ -127,22 +135,28 @@ def plot_grn(grn: pd.DataFrame,
             else:
                 vert_fill_col[v] = [39/255, 123/255, 245/255, 0.5]
 
-    gt.graph_draw(g,
-                  pos=pos,
-                  nodesfirst=False,
-                  vprops={'text': g.vp['gene_name'],
-                          'text_position': -2,
-                          'font_size': 3,
-                          'text_color': 'black',
-                          'color': vert_outline_col,
-                          'fill_color': vert_fill_col},
-                  eprops={# 'text': rounded_weights,
-                          # 'font_size': 3,
-                          'pen_width': ewidth,
-                          'color': e_color},
-                  output=plot_p)
+    gt.graph_draw(
+        g,
+        pos=pos,
+        nodesfirst=False,
+        vprops={
+            'text': g.vp['gene_name'],
+            'text_position': -2,
+            'font_size': 3,
+            'text_color': 'black',
+            'color': vert_outline_col,
+            'fill_color': vert_fill_col
+        },
+        eprops={
+            # 'text': rounded_weights,
+            # 'font_size': 3,
+            'pen_width': ewidth,
+            'color': e_color
+        },
+        output=plot_p
+    )
 
-    if axs is not None:
+    if ax is not None:
         # Plot pdf in matplotlib figure
         conda_env_path = sys.prefix
         poppler_path = os.path.join(conda_env_path, 'bin')
@@ -157,9 +171,9 @@ def plot_grn(grn: pd.DataFrame,
 
         pages = convert_from_path(plot_p, first_page=1, last_page=1, poppler_path=poppler_path)
 
-        axs.imshow(trim_whitespace(pages[0]))
+        ax.imshow(trim_whitespace(pages[0]))
         # axs.imshow(pages[0])
-        axs.axis('off')
+        ax.axis('off')
 
         '''# Add colorbars
         from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -190,46 +204,47 @@ def plot_grn(grn: pd.DataFrame,
         cax.axis('off')'''
 
 
-def plot_regulon(grn: pd.DataFrame,
-                 tf: str,
-                 sort_by: Union[str, None] = None,
-                 top_k: Union[int, None] = None,
-                 out: bool = True,
-                 weight_key: str = 'weight',
-                 pval_key: str = 'pvals_wy',
-                 show: bool = False,
-                 title: Union[str, None] = None,
-                 title_fontsize: Union[str, float, None] = None,
-                 dpi: int = 100,
-                 node_size: int = 600,
-                 font_size: int = 9,
-                 tf_target_keys: Tuple[str, str] = ('TF', 'target'),
-                 axs: Union[plt.Axes, None] = None):
+def plot_regulon(
+        grn: pd.DataFrame,
+        tf: str,
+        top_k: Union[int, None] = None,
+        sort_by: Union[str, None] = None,
+        out: bool = True,
+        weight_key: str = 'weight',
+        pval_key: str = 'pvals_wy',
+        title: Union[str, None] = None,
+        dpi: int = 100,
+        node_size: int = 600,
+        font_size: int = 9,
+        tf_target_keys: Tuple[str, str] = ('TF', 'target'),
+        ax: Union[plt.Axes, None] = None
+) -> plt.Axes:
     """
     Plots a transcription factor (TF) and its targets as a subnetwork of the gene regulatory network.
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs and additional values such as weights and P-values.
         tf (str): The transcription factor.
-        sort_by (Union[str, None], optional): Column to sort edges by (e.g., 'score'). Defaults to None.
-        top_k (Union[int, None], optional): Number of top edges to display. Defaults to None (display all).
-        out (bool, optional): If True, plots outgoing edges from TF. If False, plots incoming edges to TF. Defaults to True.
-        weight_key (str, optional): Column for edge weights. Defaults to 'weight'.
-        pval_key (str, optional): Column for p-values of edges. Defaults to 'pvals_wy'.
-        show (bool, optional): If True, displays the plot. Defaults to False.
-        title (Union[str, None], optional): Title for the plot. Defaults to None.
-        title_fontsize (Union[str, float, None]): Fontsize of the title, possible values are matplotlib fontsizes in the
-        form of a string or float. None corresponds to matplotlib's default fontsize. Defaults to None.
+        top_k (int, optional): Number of top edges to display. Defaults to None (display all).
+        sort_by (str, optional): Column to sort edges by (e.g., 'score'). Defaults to None.
+        out (bool): If True, plots outgoing edges from TF. If False, plots incoming edges to TF. Defaults to True.
+        weight_key (str): Column for edge weights. Defaults to 'weight'.
+        pval_key (str): Column for p-values of edges. Defaults to 'pvals_wy'.
+        title (str, optional): Title for the plot. Defaults to None.
         dpi (int, optional): Resolution of the plot. Defaults to 100.
         node_size (int, optional): Size of the network nodes. Defaults to 600.
         font_size (int, optional): Font size for node labels. Defaults to 9.
         tf_target_keys (Tuple[str, str], optional): Column names for TF and target in the GRN. Defaults to ('TF', 'target').
-        axs (Union[plt.Axes, None], optional): Existing matplotlib axis to plot on. Defaults to None.
+        ax (Union[plt.Axes, None], optional): Existing matplotlib axis to plot on. Defaults to None.
 
     Returns:
         None: The function generates and optionally displays the plot.
     """
 
+    if top_k is not None and sort_by is None:
+        raise ValueError('Parameter "sort_by" must be specified if "top_k" was set.')
+
+    # ### Subset the GRN dataframe to the regulon
     if out:
         # Keep edges where the TF is the desired TF
         keep_bool = np.isin(grn[tf_target_keys[0]].to_numpy(), [tf])
@@ -239,6 +254,7 @@ def plot_regulon(grn: pd.DataFrame,
 
     regulon = grn[keep_bool].copy().reset_index(drop=True)
 
+    # ### Sort edges
     if sort_by is not None:
         if sort_by not in regulon.columns and sort_by == 'score':
             weights = regulon[weight_key].to_numpy()
@@ -248,60 +264,100 @@ def plot_regulon(grn: pd.DataFrame,
 
         regulon = regulon.sort_values(sort_by, axis=0, ascending=False)
 
+    # ### Subset to top-k edges
     if top_k is not None:
         regulon = regulon[0:top_k]
 
-    reg = grn_to_nx(grn=regulon, edge_attributes=True, tf_target_keys=tf_target_keys)
+    # ### Create networkx graph from dataframe
+    regulon_nx = grn_to_nx(grn=regulon, edge_attributes=True, tf_target_keys=tf_target_keys)
 
-    if axs is None:
-        fig, axs = plt.subplots(dpi=dpi)
+    # Compute graph layout for plotting
+    pos = nx.spring_layout(regulon_nx)
 
-    pos = nx.spring_layout(reg)
+    # Assign node fill colors, bases on TF, target
+    tf_bool = (np.array(regulon_nx.nodes) == tf)
+    node_colors = np.empty(regulon_nx.number_of_nodes(), dtype=object)
+    node_colors[tf_bool] = '#277bf580'  # rgba(39, 123, 245, 0.5)
+    node_colors[~tf_bool] = '#f5c82780'  # rgba(245, 200, 39, 0.5)
 
-    tf_bool = (np.array(reg.nodes) == tf)
-    node_cols = np.empty(reg.number_of_nodes(), dtype=object)
-    node_cols[tf_bool] = '#277bf580'  # rgba(39, 123, 245, 0.5)
-    node_cols[~tf_bool] = '#f5c82780'  # rgba(245, 200, 39, 0.5)
-    node_edge_cols = np.empty(reg.number_of_nodes(), dtype=object)
-    node_edge_cols[tf_bool] = '#00c100e6'
-    node_edge_cols[~tf_bool] = '#0000004d'
-    node_edge_widths = np.ones(reg.number_of_nodes())
+    # Assign node edge colors, based on TF, target
+    node_edge_colors = np.empty(regulon_nx.number_of_nodes(), dtype=object)
+    node_edge_colors[tf_bool] = '#00c100e6'
+    node_edge_colors[~tf_bool] = '#0000004d'
+
+    # Set node edge widths, based on TF, target
+    node_edge_widths = np.ones(regulon_nx.number_of_nodes())
     node_edge_widths[tf_bool] *= 3
 
-    if regulon.shape[0] > 1:
-        edge_cols = regulon[sort_by].to_numpy()
-        edge_cols = - np.log10(edge_cols)
-        edge_cols = 0.1 + (edge_cols - edge_cols.min()) / (edge_cols.max() - edge_cols.min()) * (0.9 - 0.1)
-        ec_list = []
-        for ec in edge_cols:
-            ec_list.append((0, 0, 0, ec))
+    # Assign edge colors, based on sorting criterion (e.g. weight, p-value, score)
+    if regulon.shape[0] > 1 and sort_by is not None:
+        edge_colors = regulon[sort_by].to_numpy()
+
+        # Transform if pvalues are used for sorting
+        if sort_by.startswith('pval') or sort_by.startswith('p_val'):
+            edge_colors = - np.log10(edge_colors)
+
+        edge_colors = 0.1 + (edge_colors - edge_colors.min()) / (edge_colors.max() - edge_colors.min()) * (0.9 - 0.1)
+
+        edge_colors_list = []
+        for ec in edge_colors:
+            edge_colors_list.append((0, 0, 0, ec))
+
     else:
-        ec_list = (0, 0, 0, 0.9)
+        edge_colors_list = (0, 0, 0, 0.9)
 
-    nx.draw_networkx_nodes(reg, pos, node_size=node_size, node_color=node_cols, linewidths=node_edge_widths,
-                           edgecolors=node_edge_cols, alpha=0.8, ax=axs)
-    nx.draw_networkx_labels(reg, pos, font_size=font_size, font_color='black', ax=axs)
-    nx.draw_networkx_edges(reg, pos, width=4.0, edge_color=ec_list, node_size=node_size, ax=axs)
+    if ax is None:
+        fig, ax = plt.subplots(dpi=dpi)
 
-    axs.spines['top'].set_visible(False)
-    axs.spines['right'].set_visible(False)
-    axs.spines['left'].set_visible(False)
-    axs.spines['bottom'].set_visible(False)
+    # Draw the nodes
+    nx.draw_networkx_nodes(
+        regulon_nx,
+        pos,
+        node_size=node_size,
+        node_color=node_colors,
+        linewidths=node_edge_widths,
+        edgecolors=node_edge_colors,
+        alpha=0.8,
+        ax=ax
+    )
+
+    # Draw the node labels
+    nx.draw_networkx_labels(
+        regulon_nx,
+        pos,
+        font_size=font_size,
+        font_color='black', ax=ax
+    )
+
+    # Draw the edges
+    nx.draw_networkx_edges(
+        regulon_nx,
+        pos,
+        width=2.0,
+        edge_color=edge_colors_list,
+        node_size=node_size,
+        ax=ax
+    )
+
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+    ax.spines['left'].set_visible(False)
+    ax.spines['bottom'].set_visible(False)
 
     if title is not None:
-        axs.set_title(title, fontsize=title_fontsize)
+        ax.set_title(title)
 
-    if show:
-        plt.tight_layout()
-        plt.show()
+    return ax
 
 
 # Auxiliary ############################################################################################################
-def grn_to_gt(grn: pd.DataFrame,
-              gene_centrality_df: Union[pd.DataFrame, None],
-              weight_key: str = 'weight',
-              pval_key: str = 'pvals_wy',
-              tf_target_keys: Tuple[str, str] = ('TF', 'target')):
+def grn_to_gt(
+        grn: pd.DataFrame,
+        gene_centrality_df: Union[pd.DataFrame, None],
+        weight_key: str = 'weight',
+        pval_key: str = 'pvals_wy',
+        tf_target_keys: Tuple[str, str] = ('TF', 'target')
+):
 
     # Get edge list and corresponding int -> gene name mapping
     edge_list, idx_gn_dict = build_edge_list(grn=grn, tf_target_keys=tf_target_keys)
@@ -346,8 +402,11 @@ def grn_to_gt(grn: pd.DataFrame,
     return g
 
 
-def build_edge_list(grn: pd.DataFrame,
-                    tf_target_keys: Tuple[str, str] = ('TF', 'target')) -> Tuple[np.ndarray, dict]:
+def build_edge_list(
+        grn: pd.DataFrame,
+        tf_target_keys: Tuple[str, str] = ('TF', 'target')
+) -> Tuple[np.ndarray, dict]:
+
     tf_key = tf_target_keys[0]
     target_key = tf_target_keys[1]
     # Get unique gene names from GRN
@@ -367,9 +426,11 @@ def build_edge_list(grn: pd.DataFrame,
     return edge_list, idx_gn_dict
 
 
-def get_rgba_color_gradient(rgba1: List[float],
-                            rgba2: List[float],
-                            values: Union[int, np.ndarray]) -> np.ndarray:
+def get_rgba_color_gradient(
+        rgba1: List[float],
+        rgba2: List[float],
+        values: Union[int, np.ndarray]
+) -> np.ndarray:
 
     if isinstance(values, int):
         points = np.linspace(0, 1, values)
@@ -381,9 +442,12 @@ def get_rgba_color_gradient(rgba1: List[float],
     return out
 
 
-def interpolation_function(rgba1: List[float],
-                           rgba2: List[float],
-                           points: np.ndarray) -> np.ndarray:
+def interpolation_function(
+        rgba1: List[float],
+        rgba2: List[float],
+        points: np.ndarray
+) -> np.ndarray:
+
     # Scale to [0,1] range
     rgba1 = np.array([a / 255 if i < 3 else a for i, a in enumerate(rgba1)])
     rgba2 = np.array([a / 255 if i < 3 else a for i, a in enumerate(rgba2)])
