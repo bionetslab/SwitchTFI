@@ -78,10 +78,8 @@ def fit_model(
     if fn_prefix is None:
         fn_prefix = ''
 
-    if save_intermediate and result_folder is not None:
-        interm_folder = result_folder
-    else:
-        interm_folder = None
+    interm_folder = result_folder if save_intermediate and result_folder else None
+    if save_intermediate and result_folder is None:
         warnings.warn('No result_folder provided, cannot save intermediate results.', UserWarning)
 
     adata, grn = align_anndata_grn(
