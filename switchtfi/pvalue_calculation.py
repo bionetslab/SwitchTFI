@@ -293,11 +293,6 @@ def compute_corrected_pvalues(
         if result_folder is not None:
             fig.savefig(os.path.join(result_folder, f'{fn_prefix}weight_vs_{method}_corrected_pvalues.png'))
 
-        fig.savefig(os.path.join(result_folder, f'weight_vs_{method}_corrected_pvalues.png'))
-
-    else:
-        warnings.warn('Saving of plot not possible if result_folder is not specified.', UserWarning)
-
     return grn
 
 
