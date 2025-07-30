@@ -144,7 +144,7 @@ def fit_model(
         grn_p = os.path.join(result_folder, f'{fn_prefix}grn.csv')
         grn.to_csv(grn_p)
 
-    if plot and result_folder is not None:
+    if result_folder is not None:
 
         fig, ax = plt.subplots(figsize=(12, 12), dpi=300)
 
