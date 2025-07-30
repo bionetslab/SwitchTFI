@@ -259,14 +259,28 @@ def prune_wrt_n_cells(
         raise ValueError('Mode must be either "percent" or "quantile".')
 
     if plot:
+
+        fig, ax = plt.subplots(dpi=300)
+
         # Plot n-cell distribution
-        plt.hist(n_cells, bins=30, label='n_cells used for computing edge weight')
+        ax.hist(
+            n_cells,
+            bins=30,
+            edgecolor='grey',
+            label='n_cells used for computing edge weight'
+        )
+
         if mode == 'percent':
-            plt.axvline(x=perc_thresh, color='red', label=f'thresh = max(n_cells) * {threshold}')
+            ax.axvline(x=perc_thresh, color='red', label=f'thresh = max(n_cells) * {threshold}')
         if mode == 'quantile':
-            plt.axvline(x=threshold, color='red', label=f'{threshold}-quantile')
+            ax.axvline(x=threshold, color='red', label=f'{threshold}-quantile')
         plt.legend()
-        plt.show()
+
+        if fn_prefix is None:
+            fn_prefix = ''
+
+        if result_folder is not None:
+            fig.savefig(os.path.join(result_folder, f'{fn_prefix}cells_per_edge_for_model_fitting.png'))
 
     # Prune GRN
     grn = grn[keep_bool].reset_index(drop=True)
