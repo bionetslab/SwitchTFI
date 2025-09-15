@@ -8,6 +8,7 @@ from .data import (
     preendocrine_alpha, preendocrine_beta, erythrocytes,
     preendocrine_alpha_grn, preendocrine_beta_grn, erythrocytes_grn
 )
+from .data_processing import process_data
 
 __all__ = [
     'fit_model',
@@ -16,7 +17,8 @@ __all__ = [
     'rank_tfs',
     'plot_grn', 'plot_regulon',
     'preendocrine_alpha', 'preendocrine_beta', 'erythrocytes',
-    'preendocrine_alpha_grn', 'preendocrine_beta_grn', 'erythrocytes_grn'
+    'preendocrine_alpha_grn', 'preendocrine_beta_grn', 'erythrocytes_grn',
+    'process_data'
 ]
 
 
