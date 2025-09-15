@@ -214,6 +214,7 @@ def plot_regulon(
         pval_key: str = 'pvals_wy',
         title: Union[str, None] = None,
         dpi: int = 100,
+        edge_width: float = 2.0,
         node_size: int = 600,
         font_size: int = 9,
         tf_target_keys: Tuple[str, str] = ('TF', 'target'),
@@ -232,6 +233,7 @@ def plot_regulon(
         pval_key (str): Column for p-values of edges. Defaults to 'pvals_wy'.
         title (str, optional): Title for the plot. Defaults to None.
         dpi (int, optional): Resolution of the plot. Defaults to 100.
+        edge_width (float): Width of the edges in the plot. Defaults to 2.0.
         node_size (int, optional): Size of the network nodes. Defaults to 600.
         font_size (int, optional): Font size for node labels. Defaults to 9.
         tf_target_keys (Tuple[str, str], optional): Column names for TF and target in the GRN. Defaults to ('TF', 'target').
@@ -333,7 +335,7 @@ def plot_regulon(
     nx.draw_networkx_edges(
         regulon_nx,
         pos,
-        width=2.0,
+        width=edge_width,
         edge_color=edge_colors_list,
         node_size=node_size,
         ax=ax
