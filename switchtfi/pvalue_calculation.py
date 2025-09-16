@@ -73,7 +73,7 @@ def compute_westfall_young_adjusted_pvalues(
 
     # Compute empirical adjusted p-values
     true_weights = grn[weight_key].to_numpy()
-    p_vals = test_statistic_to_w_y_adjusted_pvalue(
+    p_vals = weights_to_w_y_adjusted_pvalue(
         true_weights=true_weights,
         permutation_weights=permutation_weights
     )
@@ -116,7 +116,7 @@ def compute_empirical_pvalues(
 
     # Compute empirical adjusted p-values
     true_weights = grn[weight_key].to_numpy()
-    p_vals = test_statistic_to_emp_pvals(
+    p_vals = weights_to_emp_pvals(
         true_weights=true_weights,
         permutation_weights=permutation_weights,
         exact_pval=True
@@ -337,7 +337,7 @@ def remove_insignificant_edges(
 
 
 # Auxiliary functions ##################################################################################################
-def test_statistic_to_w_y_adjusted_pvalue(
+def weights_to_w_y_adjusted_pvalue(
         true_weights: np.ndarray,
         permutation_weights: np.ndarray
 ) -> np.ndarray:
@@ -361,7 +361,7 @@ def test_statistic_to_w_y_adjusted_pvalue2(true_weights: np.ndarray,
     return p_vals
 
 
-def test_statistic_to_emp_pvals(
+def weights_to_emp_pvals(
         true_weights: np.ndarray,
         permutation_weights: np.ndarray,
         exact_pval: bool = True
