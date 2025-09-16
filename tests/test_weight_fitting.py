@@ -67,6 +67,14 @@ def test_calculate_max_weight():
     assert weight == 1.0
 
 
+def test_calculate_min_weight():
+    x_tf = np.array([0.1, 0.1, 0.1, 0.1])
+    labels = np.array(['A', 'A', 'B', 'B'])
+    weight, clust = calculate_weight(x_tf, threshold=0.5, labels=labels)
+
+    assert weight == 0.25
+
+
 # -------------------
 # Integration tests with simulate_data fixture
 # -------------------
