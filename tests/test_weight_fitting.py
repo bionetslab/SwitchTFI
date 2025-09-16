@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-import scanpy as sc
 
 from switchtfi.weight_fitting import (
     remove_zero_expression_cells,
