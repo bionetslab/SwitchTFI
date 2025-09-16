@@ -83,8 +83,8 @@ def fit_regression_stump_model(
             )
             continue
 
-        # Remove cells for which expression of TF and target is 0
-        x, y, keep_bool = remove_double_zero_cells(x=x, y=y)
+        # Remove cells for which expression of TF or target is 0
+        x, y, keep_bool = remove_zero_expression_cells(x=x, y=y)
 
         # Get label vector (C_1, C_2)
         labels = adata.obs[clustering_obs_key].to_numpy()[keep_bool]
@@ -372,17 +372,15 @@ def calculate_weights(
 
 
 # Auxiliary functions ##################################################################################################
-def remove_double_zero_cells(
+def remove_zero_expression_cells(
         x: np.ndarray,
         y: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Remove cells where both the TF and target gene expression are zero.
-
-    This function removes cells where the expression of both the transcription factor (TF) and the target gene is zero to ensure meaningful fitting of the regression model.
+    Remove cells where either the TF or target gene expression is zero.
 
     Args:
-        x (np.ndarray): The expression values of the transcription factor.
+        x (np.ndarray): The expression values of the TF.
         y (np.ndarray): The expression values of the target gene.
 
     Returns:
