@@ -117,16 +117,20 @@ def get_regulons_old(grn: pd.DataFrame,
     return regulon_dict
 
 
-def get_regulons(grn: pd.DataFrame,
-                 gene_names: Union[List[str], None] = None,
-                 additional_info_keys: Union[List[str], None] = None,
-                 tf_target_keys: Tuple[str, str] = ('TF', 'target')) -> Dict[str, Dict]:
+def get_regulons(
+        grn: pd.DataFrame,
+        gene_names: Union[List[str], None] = None,
+        additional_info_keys: Union[List[str], None] = None,
+        tf_target_keys: Tuple[str, str] = ('TF', 'target')
+) -> Dict[str, Dict]:
+
     # If no gene names are passed, compute regulons of all TFs
     if gene_names is None:
         gene_names = np.unique(grn[tf_target_keys[0]].to_numpy()).tolist()
 
     regulon_dict = {}
     for gene in gene_names:
+
         gene_tf_bool = (grn[tf_target_keys[0]].to_numpy() == gene)
 
         if gene_tf_bool.sum() == 0:
@@ -153,7 +157,7 @@ def align_anndata_grn(
     Args:
         adata (sc.AnnData): The input AnnData object containing gene expression data.
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ``('TF', 'target')``.
     Returns:
         Tuple[sc.AnnData, pd.DataFrame]: The aligned AnnData and DataFrame.
     """

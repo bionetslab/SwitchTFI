@@ -18,24 +18,17 @@ def process_data(
     """
     End-to-end preprocessing pipeline for single-cell RNA-seq data.
 
-    This function creates a working copy of the input AnnData object and applies
-    a sequence of preprocessing steps, including cell QC, gene QC, normalization,
-    log1p transformation, and MAGIC imputation.
+    This function creates a working copy of the input AnnData object and applies a sequence of preprocessing steps, including cell QC, gene QC, normalization, log1p transformation, and MAGIC imputation.
 
     Args:
-        adata (sc.AnnData): The input AnnData object with raw counts in `.X`.
-        qc_cells (bool, optional): Whether to perform cell-level quality control.
-            Defaults to True.
-        qc_genes (bool, optional): Whether to filter lowly expressed genes.
-            Defaults to True.
-        magic_imputation (bool, optional): Whether to apply MAGIC imputation and
-            store results in a new layer. Defaults to True.
-        verbosity (int, optional): Verbosity level for logging. Defaults to 0.
+        adata (sc.AnnData): The input AnnData object with raw counts in ``.X``.
+        qc_cells (bool): Whether to perform cell-level quality control. Defaults to True.
+        qc_genes (bool): Whether to filter lowly expressed genes. Defaults to True.
+        magic_imputation (bool): Whether to apply MAGIC imputation and store results in a new layer. Defaults to True.
+        verbosity (int): Verbosity level for logging. Defaults to 0.
 
     Returns:
-        sc.AnnData: A new AnnData object with QC-filtered cells/genes,
-        additional layers for normalized ('X_normalized'), log1p-transformed ('X_log1p_norm'),
-        and MAGIC-imputed ('X_magic_imputed') data.
+        sc.AnnData: A new AnnData object with QC-filtered cells/genes, additional layers for normalized (``X_normalized``), log1p-transformed (``X_log1p_norm``), and MAGIC-imputed (``X_magic_imputed``) data.
     """
 
     adata_work = adata.copy()
@@ -65,17 +58,14 @@ def qc_cells_fct(adata: sc.AnnData, verbosity: int = 1):
     """
     Perform cell-level quality control.
 
-    This function flags mitochondrial genes, calculates QC metrics, identifies
-    outliers based on median absolute deviation (MAD), and filters low-quality
-    cells. Returns a filtered copy of the AnnData object.
+    This function flags mitochondrial genes, calculates QC metrics, identifies outliers based on median absolute deviation, and filters low-quality cells. Returns a filtered copy of the AnnData object.
 
     Args:
-        adata (sc.AnnData): AnnData object with raw counts in `.X`.
-        verbosity (int, optional): Verbosity level for logging. Defaults to 1.
+        adata (sc.AnnData): AnnData object with raw counts in ``.X``.
+        verbosity (int): Verbosity level for logging. Defaults to 1.
 
     Returns:
-        sc.AnnData: A new AnnData object with low-quality cells removed and QC
-        metrics stored in `.obs`.
+        sc.AnnData: A new AnnData object with low-quality cells removed and QC metrics stored in ``.obs``.
     """
 
     n_cells_before = adata.n_obs
@@ -131,12 +121,11 @@ def qc_genes_fct(adata: sc.AnnData, verbosity: int = 1):
     """
     Perform gene-level quality control.
 
-    This function filters out genes that are expressed in fewer than 10 cells.
-    Returns a filtered copy of the AnnData object.
+    This function filters out genes that are expressed in fewer than 10 cells. Returns a filtered copy of the AnnData object.
 
     Args:
-        adata (sc.AnnData): AnnData object with raw counts in `.X`.
-        verbosity (int, optional): Verbosity level for logging. Defaults to 1.
+        adata (sc.AnnData): AnnData object with raw counts in ``.X``.
+        verbosity (int): Verbosity level for logging. Defaults to 1.
 
     Returns:
         sc.AnnData: A new AnnData object with lowly expressed genes removed.
@@ -162,18 +151,14 @@ def magic_imputation_fct(adata: sc.AnnData, verbosity: int = 1):
     """
     Apply MAGIC imputation to log1p-normalized data.
 
-    This function, runs MAGIC, and stores the imputed result as a new
-    layer ('X_magic_imputed') in the input AnnData object.
+    This function, runs MAGIC, and stores the imputed result as a new layer (``X_magic_imputed``) in the input AnnData object.
 
     Args:
-        adata (sc.AnnData): AnnData object with normalized and log1p-transformed
-            data in `adata.layers['X_log1p_norm']`.
-        verbosity (int, optional): Verbosity level for MAGIC output.
-            Defaults to 1.
+        adata (sc.AnnData): AnnData object with normalized and log1p-transformed data in ``adata.layers['X_log1p_norm']``.
+        verbosity (int): Verbosity level for MAGIC output. Defaults to 1.
 
     Returns:
-        sc.AnnData: The same AnnData object with an additional
-        `adata.layers['X_magic_imputed']` containing imputed values.
+        sc.AnnData: The same AnnData object with an additional ``adata.layers['X_magic_imputed']`` containing imputed values.
     """
 
     # Create dummy AnnData
@@ -212,13 +197,12 @@ def is_outlier(
     """
     Identify outliers in a QC metric using Median Absolute Deviations, MAD = median(|x_i - median(x)|).
 
-    This function flags outliers in a given observation key (`obs_key_qc_metric`) of an AnnData object
-    based on a threshold determined by the number of median absolute deviations (MAD) from the median.
+    This function flags outliers in a given observation key (`obs_key_qc_metric`) of an AnnData object based on a threshold determined by the number of median absolute deviations from the median.
 
     Args:
         adata (sc.AnnData): The AnnData object containing the QC metric to analyze.
         obs_key_qc_metric (str): The key in `adata.obs` corresponding to the QC metric to check for outliers.
-        nmads (int, optional): The number of MADs from the median to define an outlier. Defaults to 5.
+        nmads (int): The number of MADs from the median to define an outlier. Defaults to 5.
 
     Returns:
         pd.Series: A boolean series where True indicates an outlier.

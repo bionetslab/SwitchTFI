@@ -25,22 +25,18 @@ def fit_regression_stump_model(
         fn_prefix: Union[str, None] = None
 ) -> pd.DataFrame:
     """
-    Fit a regression stump model to each TF-target-edge in a GRN to infer the corresponding weight.
+    Fit a regression stump model to each TF-target edge in a GRN to compute the corresponding weight.
 
-    This function fits a decision tree regressor of depth 1 (a stump) to model the relationship between
-    transcription factors (TFs) and their target genes. It calculates the threshold, predicted values
-    for each branch, and assigns weights to the edges based on the model's prediction beeing similar to
-    already existing cluster annotations. The results are saved in the GRN DataFrame, including the
-    fitted weight for each edge.
+    This function fits a decision tree regressor of depth 1 (a regression stump) per edge to model the relationship between transcription factor and target gene. It calculates the decision threshold and the predicted values for each of the two resulting branches. Edge weights are computed based on the Jaccard similarity of the partitioning of cells induced by the decision boundary and existing progenitor-offspring annotations. The results are saved in the GRN DataFrame, including the fitted weight for each edge.
 
     Args:
         adata (sc.AnnData): The input AnnData object with scRNA-seq data.
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        layer_key (str, optional): The key for the expression data layer in AnnData. Defaults to None.
+        layer_key (str, optional): The key for the expression data layer in AnnData. Defaults to None resulting in ``adata.X`` being used.
         result_folder (str, optional): Folder to save the resulting GRN. Defaults to None.
-        new_key (str): The column name in GRN to store calculated weights. Defaults to 'weight'.
-        clustering_obs_key (str): The key in `adata.obs` representing cluster labels. Defaults to 'clusters'.
-        tf_target_keys (Tuple[str, str]): Column names in GRN representing TFs and targets. Defaults to ('TF', 'target').
+        new_key (str): The column name in GRN to store calculated weights. Defaults to ```'weight'```.
+        clustering_obs_key (str): The key in `adata.obs` representing progenitor-offspring cluster labels. Defaults to ``'clusters'``.
+        tf_target_keys (Tuple[str, str]): Column names in GRN representing TFs and targets. Defaults to ``('TF', 'target')``.
         fn_prefix (str, optional): Optional filename prefix when saving results. Defaults to None.
 
     Returns:
@@ -156,16 +152,14 @@ def prune_special_cases(
     """
     Prune edges from the GRN where no sensible weight could be fit.
 
-    This function removes edges from the GRN that are considered pathological (e.g., if all cells have
-    the same label and/or the regression stump could not be fit). The function keeps edges where TF and
-    target gene are valid and updates the GRN by removing invalid edges.
+    This function removes edges from the GRN that are considered pathological (e.g., if all cells have the same label and/or the regression stump could not be fit). The function keeps valid edges and updates the GRN by pruning invalid edges.
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
         result_folder (str, optional): Folder to save the pruned GRN and special cases. Defaults to None.
-        weight_key (str): Column name representing the edge weight. Defaults to 'weight'.
+        weight_key (str): Column name representing the edge weight. Defaults to ```'weight'```.
         verbosity (int): Level of logging. Defaults to 0.
-        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ('TF', 'target').
+        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ``('TF', 'target')``.
         fn_prefix (str, optional): Optional filename prefix for saving the output. Defaults to None.
 
     Returns:
@@ -216,16 +210,14 @@ def prune_wrt_n_cells(
     """
     Prune edges from the GRN where too few cells were used during weight fitting.
 
-    This function removes GRN edges for which too few cells were used to fit the regression stump model.
-    The pruning is based on either a percentage of the maximum number of cells or a quantile of the
-    distribution of cells used for fitting the decision stump model for an edge.
+    This function removes GRN edges for which too few cells were used to fit the regression stump model. The pruning is based on either a percentage of the maximum number of cells or a quantile of the distribution of cells used for fitting the decision stump model for an edge.
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
-        mode (Literal['percent', 'quantile']): The mode of pruning. Defaults to 'percent'.
+        mode (str): The mode of pruning. Must be one of ``'percent'``, ``'quantile'``. Defaults to ``'percent'``.
         threshold (float): The threshold for pruning edges. Defaults to 0.05.
         result_folder (str, optional): Folder to save the pruned GRN. Defaults to None.
-        cell_bool_key (str): The column in GRN with bool arrays encoding which cells were used for fitting. Defaults to 'cell_bool'.
+        cell_bool_key (str): The column in GRN with bool arrays encoding which cells were used for fitting. Defaults to ``'cell_bool'``.
         verbosity (int): Level of logging. Defaults to 0.
         plot (bool): Whether to plot the distribution of cell counts used for fitting. Defaults to False.
         fn_prefix (str, optional): Optional filename prefix when saving results. Defaults to None.
@@ -319,19 +311,17 @@ def calculate_weights(
     """
     Calculate weights for GRN edges and prune edges based on special cases and cell count.
 
-    This function performs the whole weight fitting step of the SwitchTFI method. It fits
-    a regression stump model to the GRN, calculates edge weights, and prunes edges that are
-    pathological or based on the number of cells used during weight fitting.
+    This function performs the weight fitting step of the SwitchTFI method. It fits a regression stump model to the GRN, calculates edge weights, and prunes pathological edges (no sensible regression stump could be fit) and edges for which too few cells were used during weight fitting.
 
     Args:
         adata (sc.AnnData): The input AnnData object with gene expression data.
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs.
-        layer_key (str, optional): The key for the expression data layer in AnnData. Defaults to None.
+        layer_key (str, optional): The key for the expression data layer in AnnData. Defaults to None resulting in ``adata.X`` being used.
         result_folder (str, optional): Folder to save the final weighted GRN. Defaults to None.
-        new_key (str): The column name in GRN to store the calculated weights. Defaults to 'weight'.
-        n_cell_pruning_params (Tuple[str, float], optional): Parameters for pruning based on cell count per edge. Defaults to ('percent', 0.2).
-        clustering_obs_key (str): The key in `adata.obs` representing cluster labels. Defaults to 'clusters'.
-        tf_target_keys (Tuple[str, str]): Column names in GRN representing TFs and targets. Defaults to ('TF', 'target').
+        new_key (str): The column name in GRN to store the calculated weights. Defaults to ``'weight'``.
+        n_cell_pruning_params (Tuple[str, float], optional): Parameters for pruning based on cell count per edge. Defaults to ``('percent', 0.2)``.
+        clustering_obs_key (str): The key in ``adata.obs`` representing cluster labels. Defaults to ``'clusters'``.
+        tf_target_keys (Tuple[str, str]): Column names in GRN representing TFs and targets. Defaults to ``('TF', 'target')``.
         verbosity (int): Level of logging. Defaults to 0.
         plot (bool): Whether to plot results of pruning. Defaults to False.
         fn_prefix (str, optional): Optional filename prefix when saving results. Defaults to None.
@@ -389,16 +379,14 @@ def remove_double_zero_cells(
     """
     Remove cells where both the TF and target gene expression are zero.
 
-    This function removes cells where the expression of both the transcription factor (TF) and
-    the target gene is zero to ensure meaningful fitting of the regression model.
+    This function removes cells where the expression of both the transcription factor (TF) and the target gene is zero to ensure meaningful fitting of the regression model.
 
     Args:
         x (np.ndarray): The expression values of the transcription factor.
         y (np.ndarray): The expression values of the target gene.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray, np.ndarray]: Filtered expression values of TF and target,
-        along with a boolean array indicating which cells were kept.
+        Tuple[np.ndarray, np.ndarray, np.ndarray]: Filtered expression values of TF and target, along with a boolean array indicating which cells were kept.
     """
 
     keep_bool = np.logical_and((x != 0), (y != 0))
@@ -414,9 +402,7 @@ def check_for_pathological_cases(
     """
     Check for pathological cases in the TF-target gene relationship.
 
-    This function checks for pathological cases where the regression stump model cannot be fit
-    due to issues such as all cells having the same label or all TF/target expression values
-    being identical.
+    This function checks for pathological cases where the regression stump model cannot be fit due to issues such as all cells having the same label or all TF/target expression values being identical.
 
     Args:
         x (np.ndarray): The expression values of the transcription factor.
@@ -424,8 +410,7 @@ def check_for_pathological_cases(
         labels (np.ndarray): The cluster labels for the cells.
 
     Returns:
-        Tuple[bool, bool]: A tuple indicating whether a pathological case was detected and whether
-        all cells have the same label.
+        Tuple[bool, bool]: A tuple indicating whether a pathological case was detected and whether all cells have the same label.
     """
 
     pathological = False
@@ -453,9 +438,7 @@ def calculate_weight(
     """
     Calculate the weight for a TF-target gene pair based on clustering similarity.
 
-    This function computes the weight of a TF-target gene pair by comparing the cluster
-    assignments of cells to the classification derived from thresholding TF expression
-    (threshold is the decision boundary of the decision stump, see: fit_regression_stump_model).
+    This function computes the weight of a TF-target gene pair by comparing the progenitor-offspring cluster assignments of cells to the partition derived from thresholding TF expression. The threshold is the decision boundary of the regression stump (see ``fit_regression_stump_model()``).
 
     Args:
         x_tf (np.ndarray): The expression values of the transcription factor.

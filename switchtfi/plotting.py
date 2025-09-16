@@ -21,28 +21,22 @@ def plot_grn(
         pval_key: str = 'pvals_wy',
         tf_target_keys: Tuple[str, str] = ('TF', 'target'),
         ax: Union[plt.Axes, None] = None,
-        **kwargs
+        fn_prefix: Union[str, None] = None,
 ):
     """
     Plot the gene regulatory network (GRN) and visualize transcription factor (TF) rankings.
 
-    This function visualizes the GRN by plotting TF-target gene relationships using the `graph_tool` library.
-    Vertices marked with green edging are TFs. A darker shade of blue for the fill color signifies a higher relevance
-    of the TF to the cell state transition (ranking is based on the centrality values of the TFs).
-    Edge thickness is proportional to the edge weight, and edge opacity is proportional to the empirical p-value
-    of the edge (high opacity indicates low/significant p-values).
-    The plot is saved as a PDF and optionally displayed in a matplotlib axis.
+    This function visualizes the GRN by plotting TF-target gene relationships using the ``graph_tool`` library. Vertices marked with green edging are TFs. A darker shade of blue for the fill color signifies a higher relevance of the TF to the cell state transition (ranking is based on the centrality values of the TFs). Edge thickness is proportional to the edge weight, and edge opacity is proportional to the empirical P-value of the edge (high opacity indicates low/significant P-values). The plot is saved as a PDF and optionally displayed in a matplotlib axis.
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
         gene_centrality_df (pd.DataFrame, optional): A DataFrame of gene centrality rankings. Defaults to None.
-        plot_folder (str, optional): Folder to save the plot. Defaults to None.
-        weight_key (str): Column name representing edge weights in the GRN. Defaults to 'weight'.
-        pval_key (str): Column name representing p-values for edges in the GRN. Defaults to 'pvals_wy'.
-        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+        plot_folder (str, optional): Folder to save the plot. Defaults to None, resulting in the plot being saved to the current directory.
+        weight_key (str): Column name representing edge weights in the GRN. Defaults to ``'weight'``.
+        pval_key (str): Column name representing p-values for edges in the GRN. Defaults to ``'pvals_wy'``.
+        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ``('TF', 'target')``.
         ax (plt.Axes, optional): Matplotlib axis to display the plot. Defaults to None.
-        **kwargs: Additional arguments, such as `fn_prefix` for filename prefixes.
-
+        fn_prefix (str, optional): Optional prefix for filename when saving the plot. Defaults to None.
     Returns:
         None: The function saves the plot to the specified folder and optionally displays it in a matplotlib axis.
     """
@@ -58,9 +52,7 @@ def plot_grn(
     if plot_folder is None:
         plot_folder = './'
 
-    prefix = kwargs.get('fn_prefix')
-    if prefix is None:
-        prefix = ''
+    prefix = '' if fn_prefix is None else fn_prefix
     plot_p = os.path.join(plot_folder, f'{prefix}grn.pdf')
 
     # ### Vertex position
@@ -227,20 +219,20 @@ def plot_regulon(
         grn (pd.DataFrame): The GRN DataFrame with TF-target gene pairs and additional values such as weights and P-values.
         tf (str): The transcription factor.
         top_k (int, optional): Number of top edges to display. Defaults to None (display all).
-        sort_by (str, optional): Column to sort edges by (e.g., 'score'). Defaults to None.
-        out (bool): If True, plots outgoing edges from TF. If False, plots incoming edges to TF. Defaults to True.
-        weight_key (str): Column for edge weights. Defaults to 'weight'.
-        pval_key (str): Column for p-values of edges. Defaults to 'pvals_wy'.
+        sort_by (str, optional): Column to sort edges by (e.g., ``'score'``). Defaults to None.
+        out (bool): If ``True``, plots outgoing edges from TF. If ``False``, plots incoming edges to TF. Defaults to True.
+        weight_key (str): Column for edge weights. Defaults to ``'weight'``.
+        pval_key (str): Column for p-values of edges. Defaults to ``'pvals_wy'``.
         title (str, optional): Title for the plot. Defaults to None.
         dpi (int, optional): Resolution of the plot. Defaults to 100.
         edge_width (float): Width of the edges in the plot. Defaults to 2.0.
         node_size (int, optional): Size of the network nodes. Defaults to 600.
         font_size (int, optional): Font size for node labels. Defaults to 9.
-        tf_target_keys (Tuple[str, str], optional): Column names for TF and target in the GRN. Defaults to ('TF', 'target').
-        ax (Union[plt.Axes, None], optional): Existing matplotlib axis to plot on. Defaults to None.
+        tf_target_keys (Tuple[str, str], optional): Column names for TF and target in the GRN. Defaults to ``('TF', 'target')``.
+        ax (plt.Axes, optional): Existing matplotlib axis to plot on. Defaults to None.
 
     Returns:
-        None: The function generates and optionally displays the plot.
+        None: The function generates and saves the plot.
     """
 
     if top_k is not None and sort_by is None:

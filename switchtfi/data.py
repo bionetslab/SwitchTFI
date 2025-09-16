@@ -25,9 +25,7 @@ def preendocrine_alpha() -> sc.AnnData:
     """
     Load the preprocessed pre-endocrine alpha scRNA-seq dataset.
 
-    This function attempts to load the AnnData object from an `.h5ad` file.
-    Upon its first use it loads the data from a compressed pickle file (`.pickle.xz`),
-    then saves it as an `.h5ad` file for future use.
+    This function attempts to load the AnnData object from an ``.h5ad`` file. Upon its first use it loads the data from a compressed pickle file (``.pickle.xz``), then saves it as an ``.h5ad`` file for future use.
 
     Returns:
         sc.AnnData: The pre-endocrine alpha AnnData object.
@@ -39,9 +37,7 @@ def preendocrine_beta() -> sc.AnnData:
     """
     Load the preprocessed pre-endocrine beta scRNA-seq dataset.
 
-    This function attempts to load the AnnData object from an `.h5ad` file.
-    Upon its first use it loads the data from a compressed pickle file (`.pickle.xz`),
-    then saves it as an `.h5ad` file for future use.
+    This function attempts to load the AnnData object from an ``.h5ad`` file. Upon its first use it loads the data from a compressed pickle file (``.pickle.xz``), then saves it as an ``.h5ad`` file for future use.
 
     Returns:
         sc.AnnData: The pre-endocrine beta AnnData object.
@@ -53,9 +49,7 @@ def erythrocytes() -> sc.AnnData:
     """
     Load the preprocessed erythrocyte scRNA-seq dataset.
 
-    This function attempts to load the AnnData object from an `.h5ad` file.
-    Upon its first use it loads the data from a compressed pickle file (`.pickle.xz`),
-    then saves it as an `.h5ad` file for future use.
+    This function attempts to load the AnnData object from an ``.h5ad`` file. Upon its first use it loads the data from a compressed pickle file (``.pickle.xz``), then saves it as an ``.h5ad`` file for future use.
 
     Returns:
         sc.AnnData: The erythrocyte AnnData object.

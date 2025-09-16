@@ -39,36 +39,30 @@ def fit_model(
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     """
-    Fit a gene regulatory network (GRN) model and rank transcription factors (TFs) based on centrality measures.
+    Fit edge weights and compute edge-wise empirical P-values for an input gene regulatory network (GRN), prune insignificant edges, and rank transcription factors (TFs) based on centrality.
 
-    This function aligns the input AnnData object with the GRN, calculates weights for the edges between
-    TFs and target genes, computes corrected p-values for the weights using the specified permutation
-    method, prunes insignificant edges, and ranks transcription factors based on centrality measures
-    (e.g., PageRank, degree). The resulting transition GRN and ranked TFs can be saved and optionally plotted.
+    This function aligns the scRNA-seq gene expression input data with the input GRN and vice versa, computes importance weights for each TFs-target edge, computes corrected P-values for the weights, prunes insignificant edges to obtain a transition GRN, and ranks transcription factors based on centrality measures (e.g., PageRank, degree). The resulting transition GRN and ranked TFs can be saved and plotted.
 
     Args:
         adata (sc.AnnData): The input AnnData object containing gene expression data.
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        layer_key (str, optional): The key for the expression data layer to use. Defaults to None resulting in adata.X being used.
-        result_folder (str, optional): Folder to save the resulting GRN and ranked TFs. Defaults to None.
-        weight_key (str): Column name to store the calculated weights in the GRN. Defaults to 'weight'.
-        n_cell_pruning_params (Tuple[str, float], optional): Parameters for pruning of edges in the GRN
-            based on the number of cells available for weight fitting. Defaults to ('percent', 0.2).
-        pvalue_calc_method (Literal['wy', 'bonferroni', 'sidak', 'fdr_bh', 'fdr_by']): Method for p-value calculation. Defaults to 'wy'.
-        n_permutations (int): Number of permutations for empirical p-value calculation. Defaults to 1000.
+        layer_key (str, optional): The key for the expression data layer to use. Defaults to None resulting in ``adata.X`` being used.
+        result_folder (str, optional): Folder to save the resulting GRN and ranked TFs. Defaults to None, meaning no saving.
+        weight_key (str): Column name to store the calculated weights in the GRN. Defaults to ``weight``.
+        n_cell_pruning_params (Tuple[str, float], optional): Parameters for pruning of edges in the GRN based on the number of cells available for weight fitting. Defaults to ``('percent', 0.2)``, meaning edges for which TF and target are co-expressed in less than 20% of the available cells are excluded.
+        pvalue_calc_method (str): Method for p-value calculation.  Must be one of ``'wy'``, ``'bonferroni'``, ``'sidak'``, ``'fdr_bh'``, or ``'fdr_by'``. Defaults to ``'wy'``, which is also the recommended method.
+        n_permutations (int): Number of permutations for empirical P-value calculation. Defaults to 1000.
         fwer_alpha (float): Significance threshold for FWER correction. Defaults to 0.05.
-        centrality_measure (Literal['pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank', 'katz']):
-        Centrality measure to use for ranking TFs. Defaults to 'pagerank'.
+        centrality_measure (str): Centrality measure to use for ranking TFs. Must be one of ``'pagerank'``, ``'out_degree'``, ``'eigenvector'``, ``'closeness'``, ``'betweenness'``, ``'voterank'``, or ``'katz'``. Defaults to ``'pagerank'``.
         reverse (bool): Whether to reverse the direction of edges in the graph for the centrality calculation. Defaults to True.
         undirected (bool): Whether to treat the graph as undirected during centrality calculation. Defaults to False.
         centrality_weight_key (str, optional): Column name for weights when calculating centrality. Defaults to None (unweighted case).
-        clustering_obs_key (str): Key for progenitor-offspring clustering labels in `adata.obs`. Defaults to 'clusters'.
-        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ('TF', 'target').
+        clustering_obs_key (str): Key for progenitor-offspring clustering labels in ``adata.obs``. Defaults to ``'clusters'``.
+        tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ``('TF', 'target')``.
         verbosity (int): Level of logging for detailed output. Defaults to 0.
-        plot (bool): Whether to plot the resulting GRN and centrality rankings. Defaults to False.
         save_intermediate (bool): Whether to save intermediate results during the process. Defaults to False.
-        fn_prefix (Union[str, None], optional): Optional prefix for filenames when saving results. Defaults to None.
-        **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
+        fn_prefix (str, optional): Optional prefix for filenames when saving results. Defaults to None.
+        **kwargs: Additional arguments for the centrality calculation that are passed to the respective NetworkX function.
 
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: The pruned GRN consisting only of significant edges and the TFs ranked based on their centrality in the pruned GRN.
