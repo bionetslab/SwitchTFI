@@ -1,22 +1,31 @@
 
 import pandas as pd
 import scanpy as sc
-import pkg_resources
+
+import importlib.resources as resources
+# import pkg_resources
 import lzma
 import pickle
 
 
 def _load_anndata(filename_base: str) -> sc.AnnData:
 
-    h5ad_path = pkg_resources.resource_filename(__name__, f'd/{filename_base}.h5ad')
-    compressed_path = pkg_resources.resource_filename(__name__, f'd/{filename_base}.pickle.xz')
+    # h5ad_path = pkg_resources.resource_filename(__name__, f'd/{filename_base}.h5ad')
+    # compressed_path = pkg_resources.resource_filename(__name__, f'd/{filename_base}.pickle.xz')
 
-    try:
-        adata = sc.read_h5ad(h5ad_path)
-    except FileNotFoundError:
-        with lzma.open(compressed_path, 'rb') as f:
-            adata = pickle.load(f)
-        sc.write(h5ad_path, adata)
+    package = 'switchtfi'
+
+    with (
+        resources.as_file(resources.files(package) / f'd/{filename_base}.h5ad') as h5ad_path,
+        resources.as_file(resources.files(package) / f'd/{filename_base}.pickle.xz') as compressed_path
+    ):
+
+        try:
+            adata = sc.read_h5ad(h5ad_path)
+        except FileNotFoundError:
+            with lzma.open(compressed_path, 'rb') as f:
+                adata = pickle.load(f)
+            sc.write(h5ad_path, adata)
 
     return adata
 
