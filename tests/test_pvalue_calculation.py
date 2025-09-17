@@ -60,7 +60,6 @@ def test_test_statistic_to_emp_pvals_exact_and_nonexact():
 # Integration tests with simulate_data
 # -------------------
 
-@pytest.mark.slow
 def test_compute_westfall_young_adjusted_pvalues(simulate_data):
     adata, grn = simulate_data
 
@@ -71,7 +70,6 @@ def test_compute_westfall_young_adjusted_pvalues(simulate_data):
     assert out['pvals_wy'].between(0, 1).all()
 
 
-@pytest.mark.slow
 def test_compute_empirical_pvalues(simulate_data):
     adata, grn = simulate_data
     out = compute_empirical_pvalues(
