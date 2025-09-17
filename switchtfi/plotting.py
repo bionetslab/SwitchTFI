@@ -1,14 +1,12 @@
 
 import os
-import sys
+import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import graph_tool.all as gt
 import networkx as nx
 
 from typing import *
-from pdf2image import convert_from_path
 from PIL import Image, ImageChops
 from .tf_ranking import grn_to_nx
 
@@ -22,6 +20,7 @@ def plot_grn(
         tf_target_keys: Tuple[str, str] = ('TF', 'target'),
         ax: Union[plt.Axes, None] = None,
         fn_prefix: Union[str, None] = None,
+        nx_plot_kwargs: Union[dict, None] = None,
 ):
     """
     Plot the gene regulatory network (GRN) and visualize transcription factor (TF) rankings.
@@ -37,163 +36,285 @@ def plot_grn(
         tf_target_keys (Tuple[str, str]): Column names for TFs and targets in the GRN. Defaults to ``('TF', 'target')``.
         ax (plt.Axes, optional): Matplotlib axis to display the plot. Defaults to None.
         fn_prefix (str, optional): Optional prefix for filename when saving the plot. Defaults to None.
+        nx_plot_kwargs: (dict, optional): Optional keyword arguments for networkx plotting (only relevant if graph-tool is not installed). Possible kwargs are ``'node_size'``, ``'font_size'``, and ``'edge_width'``. Defaults to None.
     Returns:
         None: The function saves the plot to the specified folder and optionally displays it in a matplotlib axis.
     """
+    try:
 
-    g = grn_to_gt(
-        grn=grn,
-        gene_centrality_df=gene_centrality_df,
-        weight_key=weight_key,
-        pval_key=pval_key,
-        tf_target_keys=tf_target_keys
-    )
+        import graph_tool.all as gt
 
-    if plot_folder is None:
-        plot_folder = './'
-
-    prefix = '' if fn_prefix is None else fn_prefix
-    plot_p = os.path.join(plot_folder, f'{prefix}grn.pdf')
-
-    # ### Vertex position
-    pos = gt.sfdp_layout(g, C=0.01, p=2, r=10)  # r=6)
-    # pos = gt.fruchterman_reingold_layout(g)
-    # pos = gt.arf_layout(g, max_iter=100, epsilon=10**(-4))
-
-    # ### Edge properties
-    # Get rounded edge weights as string ep for plotting weight on edges
-    rounded_weights = g.new_ep('string')
-    for e in g.edges():
-        rounded_weights[e] = str(round(g.ep[weight_key][e], ndigits=3))
-
-    # Define edge width proportional to edge weight
-    ewidth = g.new_ep('long double')
-    a = g.ep[weight_key].a
-    if (a.max() - a.min()) != 0:
-        a = (a - a.min()) / (a.max() - a.min()) * 3
-    else:
-        a = np.ones(shape=a.shape) * 1.5
-    ewidth.a = a
-
-    # Define colors of edges based on p-values
-    p = g.ep[pval_key].a
-    if (p.max() - p.min()) != 0:
-        p = (p - p.min()) / (p.max() - p.min())
-    else:
-        p = np.ones(shape=p.shape) * 0.5
-
-    p = get_rgba_color_gradient(
-        rgba1=[0, 0, 0, 0.7],
-        rgba2=[0, 0, 0, 0.1],
-        values=np.array(p)
-    )
-
-    e_color = g.new_ep('vector<long double>')
-    for i, e in enumerate(g.edges()):
-        e_color[e] = p[i, :]
-
-    # ### Vertex properties
-    # Define green outline of TF vertices
-    vert_outline_col = g.new_vp('vector<long double>')
-    for v in g.vertices():
-        if g.vp['tf'][v]:
-            vert_outline_col[v] = [0, 193/255, 0, 0.9]
-        else:
-            vert_outline_col[v] = [0, 0, 0, 0.3]
-
-    # Define fill color vertices, based on TF ranking
-    vert_fill_col = g.new_vp('vector<long double>')
-    if gene_centrality_df is not None:
-
-        tf_bool = g.vp['tf'].a.astype('bool')
-        sorted_indices = np.argsort(g.vp[gene_centrality_df.columns[1]].a)[::-1]  # vertex index = index
-        tf_indices = np.where(tf_bool)[0]
-        sorted_tfs = sorted_indices[np.isin(sorted_indices, tf_indices)]
-
-        tf_rgba0 = [19, 0, 255, 0.9]
-        tf_rgba1 = [0, 255, 231, 0.3]
-        tf_cols = get_rgba_color_gradient(
-            rgba1=tf_rgba0,
-            rgba2=tf_rgba1,
-            values=int(tf_bool.sum())
+        g = grn_to_gt(
+            grn=grn,
+            gene_centrality_df=gene_centrality_df,
+            weight_key=weight_key,
+            pval_key=pval_key,
+            tf_target_keys=tf_target_keys
         )
 
-    for v in g.vertices():
-        if not g.vp['tf'][v]:
-            vert_fill_col[v] = [255, 147, 0, 0.5]
+        if plot_folder is None:
+            plot_folder = './'
+
+        prefix = '' if fn_prefix is None else fn_prefix
+        plot_p = os.path.join(plot_folder, f'{prefix}grn.pdf')
+
+        # ### Vertex position
+        pos = gt.sfdp_layout(g, C=0.01, p=2, r=10)  # r=6)
+        # pos = gt.fruchterman_reingold_layout(g)
+        # pos = gt.arf_layout(g, max_iter=100, epsilon=10**(-4))
+
+        # ### Edge properties
+        # Get rounded edge weights as string ep for plotting weight on edges
+        rounded_weights = g.new_ep('string')
+        for e in g.edges():
+            rounded_weights[e] = str(round(g.ep[weight_key][e], ndigits=3))
+
+        # Define edge width proportional to edge weight
+        ewidth = g.new_ep('long double')
+        a = g.ep[weight_key].a
+        if (a.max() - a.min()) != 0:
+            a = (a - a.min()) / (a.max() - a.min()) * 3
         else:
-            if gene_centrality_df is not None:
-                vert_fill_col[v] = tf_cols[np.where(sorted_tfs == int(v))[0][0], :]
+            a = np.ones(shape=a.shape) * 1.5
+        ewidth.a = a
+
+        # Define colors of edges based on p-values
+        p = g.ep[pval_key].a
+        if (p.max() - p.min()) != 0:
+            p = (p - p.min()) / (p.max() - p.min())
+        else:
+            p = np.ones(shape=p.shape) * 0.5
+
+        p = get_rgba_color_gradient(
+            rgba1=[0, 0, 0, 0.7],
+            rgba2=[0, 0, 0, 0.1],
+            values=np.array(p)
+        )
+
+        e_color = g.new_ep('vector<long double>')
+        for i, e in enumerate(g.edges()):
+            e_color[e] = p[i, :]
+
+        # ### Vertex properties
+        # Define green outline of TF vertices
+        vert_outline_col = g.new_vp('vector<long double>')
+        for v in g.vertices():
+            if g.vp['tf'][v]:
+                vert_outline_col[v] = [0, 193/255, 0, 0.9]
             else:
-                vert_fill_col[v] = [39/255, 123/255, 245/255, 0.5]
+                vert_outline_col[v] = [0, 0, 0, 0.3]
 
-    gt.graph_draw(
-        g,
-        pos=pos,
-        nodesfirst=False,
-        vprops={
-            'text': g.vp['gene_name'],
-            'text_position': -2,
-            'font_size': 3,
-            'text_color': 'black',
-            'color': vert_outline_col,
-            'fill_color': vert_fill_col
-        },
-        eprops={
-            # 'text': rounded_weights,
-            # 'font_size': 3,
-            'pen_width': ewidth,
-            'color': e_color
-        },
-        output=plot_p
-    )
+        # Define fill color vertices, based on TF ranking
+        vert_fill_col = g.new_vp('vector<long double>')
+        if gene_centrality_df is not None:
 
-    if ax is not None:
-        # Plot pdf in matplotlib figure
-        conda_env_path = sys.prefix
-        poppler_path = os.path.join(conda_env_path, 'bin')
+            tf_bool = g.vp['tf'].a.astype('bool')
+            sorted_indices = np.argsort(g.vp[gene_centrality_df.columns[1]].a)[::-1]  # vertex index = index
+            tf_indices = np.where(tf_bool)[0]
+            sorted_tfs = sorted_indices[np.isin(sorted_indices, tf_indices)]
 
-        def trim_whitespace(img):
-            bg = Image.new(img.mode, img.size, img.getpixel((0, 0)))
-            diff = ImageChops.difference(img, bg)
-            bbox = diff.getbbox()
-            if bbox:
-                return img.crop(bbox)
-            return img
+            tf_rgba0 = [19, 0, 255, 0.9]
+            tf_rgba1 = [0, 255, 231, 0.3]
+            tf_cols = get_rgba_color_gradient(
+                rgba1=tf_rgba0,
+                rgba2=tf_rgba1,
+                values=int(tf_bool.sum())
+            )
 
-        pages = convert_from_path(plot_p, first_page=1, last_page=1, poppler_path=poppler_path)
+        for v in g.vertices():
+            if not g.vp['tf'][v]:
+                vert_fill_col[v] = [255, 147, 0, 0.5]
+            else:
+                if gene_centrality_df is not None:
+                    vert_fill_col[v] = tf_cols[np.where(sorted_tfs == int(v))[0][0], :]
+                else:
+                    vert_fill_col[v] = [39/255, 123/255, 245/255, 0.5]
 
-        ax.imshow(trim_whitespace(pages[0]))
-        # axs.imshow(pages[0])
-        ax.axis('off')
+        gt.graph_draw(
+            g,
+            pos=pos,
+            nodesfirst=False,
+            vprops={
+                'text': g.vp['gene_name'],
+                'text_position': -2,
+                'font_size': 3,
+                'text_color': 'black',
+                'color': vert_outline_col,
+                'fill_color': vert_fill_col
+            },
+            eprops={
+                # 'text': rounded_weights,
+                # 'font_size': 3,
+                'pen_width': ewidth,
+                'color': e_color
+            },
+            output=plot_p
+        )
 
-        '''# Add colorbars
-        from mpl_toolkits.axes_grid1 import make_axes_locatable
-        import matplotlib.patches as patches
+        if ax is not None:
 
-        sorted_tf_names = [g.vp['gene_name'][tf] for tf in sorted_tfs]
+            def trim_whitespace(img):
+                bg = Image.new(img.mode, img.size, img.getpixel((0, 0)))
+                diff = ImageChops.difference(img, bg)
+                bbox = diff.getbbox()
+                if bbox:
+                    return img.crop(bbox)
+                return img
 
-        # Create a divider for the existing axes instance
-        divider = make_axes_locatable(axs)
 
-        # Append a new axes below the imshow plot with 20% height of ax
-        cax = divider.append_axes("bottom", size="20%", pad=0.6)
+            try:
 
-        # Define the positions for each circle
-        positions = np.linspace(0.1, 0.9, len(sorted_tf_names))
+                import fitz  # PyMuPDF
 
-        for i in range(len(sorted_tf_names)):
-            circle = patches.Circle((positions[i], 0.5), radius=0.1, edgecolor='black', facecolor=tf_cols[i],
-                                    linewidth=2)
-            cax.add_patch(circle)
+                def pdf_page_to_image(path: str, page_num: int = 0):
+                    doc = fitz.open(path)
+                    page = doc[page_num]
+                    pix = page.get_pixmap(dpi=600)
+                    mode = 'RGBA' if pix.alpha else 'RGB'
+                    img = Image.frombytes(mode, (pix.width, pix.height), pix.samples)
+                    return img
 
-            # Add the text inside the circle
-            cax.text(positions[i], 0.5, sorted_tf_names[i], fontsize=12, ha='center', va='center', color='black')
+                page_img = pdf_page_to_image(plot_p, page_num=0)
+                ax.imshow(trim_whitespace(page_img))
+                ax.axis('off')
 
-        # Adjust limits and remove axes for the circle plot
-        cax.set_xlim(0, 1)
-        cax.set_ylim(0, 1)
-        cax.axis('off')'''
+            except ImportError:
+
+                import sys
+                from pdf2image import convert_from_path
+
+                # Plot pdf in matplotlib figure
+                conda_env_path = sys.prefix
+                poppler_path = os.path.join(conda_env_path, 'bin')
+
+                pages = convert_from_path(plot_p, first_page=1, last_page=1, poppler_path=poppler_path)
+
+                ax.imshow(trim_whitespace(pages[0]))
+                ax.axis('off')
+
+            # # Add colorbars
+            # from mpl_toolkits.axes_grid1 import make_axes_locatable
+            # import matplotlib.patches as patches
+
+            # sorted_tf_names = [g.vp['gene_name'][tf] for tf in sorted_tfs]
+
+            # # Create a divider for the existing axes instance
+            # divider = make_axes_locatable(axs)
+
+            # # Append a new axes below the imshow plot with 20% height of ax
+            # cax = divider.append_axes("bottom", size="20%", pad=0.6)
+
+            # # Define the positions for each circle
+            # positions = np.linspace(0.1, 0.9, len(sorted_tf_names))
+
+            # for i in range(len(sorted_tf_names)):
+            #     circle = patches.Circle((positions[i], 0.5), radius=0.1, edgecolor='black', facecolor=tf_cols[i],
+            #                             linewidth=2)
+            #     cax.add_patch(circle)
+
+            #     # Add the text inside the circle
+            #     cax.text(positions[i], 0.5, sorted_tf_names[i], fontsize=12, ha='center', va='center', color='black')
+
+            # # Adjust limits and remove axes for the circle plot
+            # cax.set_xlim(0, 1)
+            # cax.set_ylim(0, 1)
+            # cax.axis('off')
+
+    except ImportError as e:
+
+        warnings.warn(f'Ran into ImportError:\n"{e}"\nDefaulting to Networkx for graph plotting, results may differ.')
+
+        # ### Sort edges by score
+        weights = grn[weight_key].to_numpy()
+        pvals = grn[pval_key].to_numpy()
+        pvals += np.finfo(np.float64).eps
+        grn['score'] = -np.log10(pvals) * weights
+
+        grn = grn.sort_values('score', axis=0, ascending=False)
+
+        # ### Create networkx graph from dataframe
+        g = grn_to_nx(grn=grn, edge_attributes=True, tf_target_keys=tf_target_keys)
+
+        # Compute graph layout for plotting
+        pos = nx.spring_layout(g, k=1.0)
+
+        # Assign node fill colors, bases on TF, target
+        tfs = set(grn[tf_target_keys[0]].tolist())
+        tf_bool = np.array([gene in tfs for gene in g.nodes])
+        node_colors = np.empty(g.number_of_nodes(), dtype=object)
+        node_colors[tf_bool] = '#277bf580'  # rgba(39, 123, 245, 0.5)
+        node_colors[~tf_bool] = '#f5c82780'  # rgba(245, 200, 39, 0.5)
+
+        # Assign node edge colors, based on TF, target
+        node_edge_colors = np.empty(g.number_of_nodes(), dtype=object)
+        node_edge_colors[tf_bool] = '#00c100e6'
+        node_edge_colors[~tf_bool] = '#0000004d'
+
+        # Set node edge widths, based on TF, target
+        node_edge_widths = np.ones(g.number_of_nodes())
+        node_edge_widths[tf_bool] *= 3
+
+        # Assign edge colors, based on sorting criterion (e.g. weight, p-value, score)
+
+        edge_colors = grn['score'].to_numpy()
+
+        edge_colors = (
+                0.1 + (edge_colors - edge_colors.min())
+                / (edge_colors.max() - edge_colors.min()) * (0.9 - 0.1)
+        )
+
+        edge_colors_list = []
+        for ec in edge_colors:
+            edge_colors_list.append((0, 0, 0, ec))
+
+        if ax is None:
+            fig, ax = plt.subplots(dpi=300)
+        else:
+            fig = ax.figure
+
+        if nx_plot_kwargs is None:
+            nx_plot_kwargs = {'node_size': 600, 'font_size': 9, 'edge_width': 2.0}
+
+        # Draw the nodes
+        nx.draw_networkx_nodes(
+            g,
+            pos,
+            node_size=nx_plot_kwargs['node_size'],
+            node_color=node_colors,
+            linewidths=node_edge_widths,
+            edgecolors=node_edge_colors,
+            alpha=0.8,
+            ax=ax
+        )
+
+        # Draw the node labels
+        nx.draw_networkx_labels(
+            g,
+            pos,
+            font_size=nx_plot_kwargs['font_size'],
+            font_color='black',
+            ax=ax
+        )
+
+        # Draw the edges
+        nx.draw_networkx_edges(
+            g,
+            pos,
+            width=nx_plot_kwargs['edge_width'],
+            edge_color=edge_colors_list,
+            node_size=nx_plot_kwargs['node_size'],
+            ax=ax
+        )
+
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+
+        prefix = '' if fn_prefix is None else fn_prefix
+        plot_p = os.path.join(plot_folder, f'{prefix}grn.png')
+        fig.tight_layout()
+        fig.savefig(plot_p, dpi=fig.dpi)
 
 
 def plot_regulon(
@@ -353,12 +474,17 @@ def grn_to_gt(
         tf_target_keys: Tuple[str, str] = ('TF', 'target')
 ):
 
+    import graph_tool.all as gt
+
     # Get edge list and corresponding int -> gene name mapping
     edge_list, idx_gn_dict = build_edge_list(grn=grn, tf_target_keys=tf_target_keys)
 
     # Add attribute values to edge list
-    weights = np.reshape(grn[weight_key].to_numpy(), newshape=(grn.shape[0], 1))
-    pvals = np.reshape(grn[pval_key].to_numpy(), newshape=(grn.shape[0], 1))
+    # weights = np.reshape(grn[weight_key].to_numpy(), newshape=(grn.shape[0], 1))
+    # pvals = np.reshape(grn[pval_key].to_numpy(), newshape=(grn.shape[0], 1))
+    weights = grn[weight_key].to_numpy().reshape(-1, 1)
+    pvals = grn[pval_key].to_numpy().reshape(-1, 1)
+
     edge_list = np.hstack((edge_list, weights, pvals))
 
     # Initialize graph
