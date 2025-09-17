@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "switchtfi"
+version = "0.1.0"
+description = "Implementation of the SwitchTFI method as presented in: https://doi.org/10.1101/2025.01.20.633856"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [
+  { name = "Paul Martini", email = "paul.martini@fau.de" }
+]
+requires-python = ">=3.9, <3.13"
+
+dependencies = [
+  "numpy >=1.26.4",
+  "pandas >=2.2.3",
+  "scipy >=1.14.1",
+  "scikit-learn >=1.5.2",
+  "statsmodels >=0.14.1",
+  "matplotlib >=3.5.2",
+  "seaborn >=0.13.2",
+  "anndata >=0.10.7",
+  "scanpy >=1.9.3",
+  "python-igraph >=0.11.4",
+  "magic-impute >=3.0.0",
+  "leidenalg >=0.10.2",
+  "networkx >=3.4",
+]
+
+keywords = ["bioinformatics", "single-cell", "gene-regulation", "network-analysis"]
+
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Source = "https://github.com/bionetslab/SwitchTFI"
+Documentation = "https://github.com/bionetslab/SwitchTFI#readme"
+Issues = "https://github.com/bionetslab/SwitchTFI/issues"
+
+[tool.setuptools.packages.find]
+include = ["switchtfi*"]
+exclude = ["switchtfi.d*", "switchtfi.data", "tests*"]
+
+[tool.setuptools]
+package-dir = {"" = "."}
