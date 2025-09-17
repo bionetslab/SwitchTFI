@@ -6,14 +6,17 @@ def main(dataset: str):
     import matplotlib.pyplot as plt
 
     from switchtfi import (
-        erythrocytes, preendocrine_beta, preendocrine_alpha,
-        erythrocytes_grn, preendocrine_beta_grn, preendocrine_alpha_grn,
         fit_model,
         calculate_weights,
         compute_corrected_pvalues,
         remove_insignificant_edges,
         rank_tfs,
         plot_regulon
+    )
+
+    from switchtfi.data import (
+        erythrocytes, preendocrine_beta, preendocrine_alpha,
+        erythrocytes_grn, preendocrine_beta_grn, preendocrine_alpha_grn,
     )
 
     # Load the preprocessed scRNA-seq data and GRN (previously inferred with the Scenic method)
