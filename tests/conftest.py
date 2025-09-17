@@ -48,6 +48,7 @@ def simulate_data():
     })
 
     grn['weight'] = np.random.uniform(0.25, 1.0, size=n_edges)
+    grn['pvals_wy'] = np.random.uniform(0.0, 1.0, size=n_edges)
     grn['cell_bool'] = [np.ones(adata.n_obs).astype(bool), ] * n_edges
     cb_dummy = np.concatenate([np.zeros(int(n_cells / 2)).astype(bool), np.zeros(int(n_cells / 2)).astype(bool)])
     grn['cluster_bool_dt'] = [cb_dummy, ] * n_edges
