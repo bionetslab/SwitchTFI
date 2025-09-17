@@ -73,9 +73,11 @@ def preendocrine_alpha_grn() -> pd.DataFrame:
     Returns:
         pd.DataFrame: The GRN as an edge-list.
     """
-    return pd.read_csv(
-        pkg_resources.resource_filename(__name__, 'd/ngrnthresh9_alpha_pyscenic_combined_grn.csv'), index_col=0
-    )
+    package = 'switchtfi'
+    with resources.as_file(resources.files(package) / f'd/ngrnthresh9_alpha_pyscenic_combined_grn.csv') as grn_path:
+        grn = pd.read_csv(grn_path, index_col=0)
+
+    return grn
 
 
 def preendocrine_beta_grn() -> pd.DataFrame:
@@ -85,9 +87,12 @@ def preendocrine_beta_grn() -> pd.DataFrame:
     Returns:
         pd.DataFrame: The GRN as an edge-list.
     """
-    return pd.read_csv(
-        pkg_resources.resource_filename(__name__, 'd/ngrnthresh9_beta_pyscenic_combined_grn.csv'), index_col=0
-    )
+
+    package = 'switchtfi'
+    with resources.as_file(resources.files(package) / f'd/ngrnthresh9_beta_pyscenic_combined_grn.csv') as grn_path:
+        grn = pd.read_csv(grn_path, index_col=0)
+
+    return grn
 
 
 def erythrocytes_grn() -> pd.DataFrame:
@@ -97,6 +102,9 @@ def erythrocytes_grn() -> pd.DataFrame:
     Returns:
         pd.DataFrame: The GRN as an edge-list.
     """
-    return pd.read_csv(
-        pkg_resources.resource_filename(__name__, 'd/ngrnthresh9_erythrocytes_pyscenic_combined_grn.csv'), index_col=0
-    )
+
+    package = 'switchtfi'
+    with resources.as_file(resources.files(package) / f'd/ngrnthresh9_erythrocytes_pyscenic_combined_grn.csv') as grn_path:
+        grn = pd.read_csv(grn_path, index_col=0)
+
+    return grn
