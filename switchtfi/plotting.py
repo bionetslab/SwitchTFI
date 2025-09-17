@@ -40,6 +40,10 @@ def plot_grn(
     Returns:
         None: The function saves the plot to the specified folder and optionally displays it in a matplotlib axis.
     """
+
+    if plot_folder is None:
+        plot_folder = './'
+
     try:
 
         import graph_tool.all as gt
@@ -51,9 +55,6 @@ def plot_grn(
             pval_key=pval_key,
             tf_target_keys=tf_target_keys
         )
-
-        if plot_folder is None:
-            plot_folder = './'
 
         prefix = '' if fn_prefix is None else fn_prefix
         plot_p = os.path.join(plot_folder, f'{prefix}grn.pdf')
