@@ -42,7 +42,10 @@ def load_grn_json(grn_path: str) -> pd.DataFrame:
 
 def labels_to_bool(clustering: np.ndarray) -> np.ndarray:
     cluster_labels = np.unique(clustering)
-    assert cluster_labels.shape[0] <= 2, "Clustering must consist of at most 2 clusters."
+
+    if cluster_labels.shape[0] > 2:
+        raise ValueError('Clustering must consist of at most 2 clusters.')
+
     cluster_bool = (clustering == cluster_labels[0])
 
     return cluster_bool
@@ -70,8 +73,11 @@ def calc_ji(a: np.ndarray, b: np.ndarray) -> float:
 
     # JI(A, B) = #(A \cap B) / #(A \cup B) \in [0,1]
     # True entries in vector indicate that cell is contained in set
-    assert a.dtype == 'bool' and b.dtype == 'bool', 'Arrays must be bool arrays'
-    assert a.shape[0] == b.shape[0], 'Input arrays must be of same dimension'
+    if not a.dtype == 'bool' or not b.dtype == 'bool':
+        raise ValueError('Input must be bool arrays.')
+
+    if not a.shape[0] == b.shape[0]:
+        raise ValueError('Input arrays must be of same dimension')
 
     if a.sum() == 0 and b.sum() == 0:
         ji = 0
