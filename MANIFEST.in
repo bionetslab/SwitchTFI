@@ -1,0 +1,16 @@
+
+# Exclude unwanted Python files/modules
+exclude switchtfi/data.py
+recursive-exclude switchtfi/d *
+
+# Exclude tests and examples
+recursive-exclude tests *
+exclude example.py
+
+# Exclude conda / CI config files
+exclude *.yml
+exclude *.yaml
+
+# Keep essentials
+include README.md
+include LICENSE
