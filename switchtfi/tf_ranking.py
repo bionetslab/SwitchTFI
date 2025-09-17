@@ -110,21 +110,18 @@ def rank_tfs(
     """
     Rank transcription factors (TFs) in the GRN based on their centrality in the network.
 
-    This function ranks transcription factors in the GRN based on a specified centrality measure
-    (e.g., PageRank, degree, closeness). The function computes the centrality measure for all genes
-    and filters the result to retain only TFs. Optionally the all edges can be reversed, all edges
-    can be set to be undirected and edge weights can be defined before computing centrality.
+    This function ranks transcription factors in the GRN based on a specified centrality measure (e.g., PageRank, degree, closeness). The function computes the centrality measure for all genes and filters the result to retain only TFs. Optionally the all edges can be reversed, all edges can be set to be undirected and edge weights can be defined before computing centrality.
 
     Args:
         grn (pd.DataFrame): The GRN DataFrame containing TF-target gene pairs.
-        centrality_measure (Literal['pagerank', 'out_degree', 'eigenvector', 'closeness', 'betweenness', 'voterank', 'katz']): The centrality measure to use for ranking. Defaults to 'pagerank'.
+        centrality_measure (str): The centrality measure to use for ranking. Most be one of ``'pagerank'``, ``'out_degree'``, ``'eigenvector'``, ``'closeness'``, ``'betweenness'``, ``'voterank'``, ``'katz'``. Defaults to ``'pagerank'``.
         reverse (bool): Whether to reverse the direction of edges in the graph. Defaults to True.
         undirected (bool): Whether to treat the graph as undirected. Defaults to False.
-        weight_key (str, optional): The key for edge weights in the GRN. None corresponds to the unweighted case. If the key 'score' is passed and does not already exist in the GRN, then the weight is computed as the score = -log10(p-vals) * weight. Defaults to None.
+        weight_key (str, optional): The key for edge weights in the GRN. None corresponds to the unweighted case. If the key ``'score'`` is passed and does not already exist in the GRN, then the weight is computed as the ``score = -log10(p-vals) * weight``. Defaults to None.
         result_folder (str, optional): Folder to save the ranked TFs. Defaults to None.
-        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ('TF', 'target').
+        tf_target_keys (Tuple[str, str]): Column names for TF and target genes. Defaults to ``('TF', 'target')``.
         fn_prefix (str, optional): Optional filename prefix for saving results. Defaults to None.
-        **kwargs: Additional arguments for the centrality calculation are passed to the respective NetworkX function.
+        **kwargs: Additional arguments for the centrality calculation that are passed to the respective NetworkX function.
 
     Returns:
         pd.DataFrame: A DataFrame of ranked transcription factors based on the selected centrality measure.
@@ -139,13 +136,15 @@ def rank_tfs(
         )
 
     # Compute pagerank of all genes in GRN
-    gene_pr_df, _ = calculate_centrality_nx(grn=grn,
-                                            centrality_measure=centrality_measure,
-                                            reverse=reverse,
-                                            undirected=undirected,
-                                            weight_key=weight_key,
-                                            tf_target_keys=tf_target_keys,
-                                            **kwargs)
+    gene_pr_df, _ = calculate_centrality_nx(
+        grn=grn,
+        centrality_measure=centrality_measure,
+        reverse=reverse,
+        undirected=undirected,
+        weight_key=weight_key,
+        tf_target_keys=tf_target_keys,
+        **kwargs
+    )
 
     # Remove genes that are not TFs
     tfs = grn[tf_target_keys[0]].to_numpy()
