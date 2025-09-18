@@ -28,7 +28,7 @@ conda activate switchtfi
 
 **2. Install directly from Conda**
 
-This is the simplest way to install the package. Datasets and GRNs are not included in this installation, but a usage example is included in the repository under ``/docs/example.ipynb``.
+This is the simplest way to install the package. Datasets and GRNs are not included in this installation, but a usage example is included in the repository under [/docs/example.ipynb](/docs/example.ipynb).
 
 ```bash
 conda install -c conda-forge -c bioconda switchtfi
@@ -40,7 +40,7 @@ All relevant functions are documented with **docstrings**. For details on functi
 
 - **Repository clone:**
   
-  Preprocessed scRNA-seq datasets and previously inferred GRNs can be accessed via the ``switchtfi.data`` module. An example workflow is provided in ``example.py``, please also see the comments there for additional information. To select an example dataset set the flag to *ery*, *beta*, or *alpha*. 
+  Preprocessed scRNA-seq datasets and previously inferred GRNs can be accessed via the ``switchtfi.data`` module. An example workflow is provided in [example.py](example.py), please also see the comments there for additional information. To select an example dataset set the flag to *ery*, *beta*, or *alpha*. 
 
   ```bash
   # Run SwitchTFI analyses with the preprocessed scRNA-seq data and a previously inferred GRN as an input
@@ -48,7 +48,7 @@ All relevant functions are documented with **docstrings**. For details on functi
   ```
 - **Conda installation:**
   
-  Datasets are not included, but a usage example is provided in the repository under ``/docs/example.ipynb``. Data preprocessing is demonstrated here as well.
+  Datasets are not included, but a usage example is provided in the repository under [/docs/example.ipynb](/docs/example.ipynb). Data preprocessing is demonstrated there as well.
 
 ## License
 
