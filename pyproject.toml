@@ -53,4 +53,4 @@ include = ["switchtfi*"]
 exclude = ["switchtfi.d*", "switchtfi.data", "tests*", "docs*"]
 
 [tool.setuptools]
-package-dir = {"" = "."}
+include-package-data = false  # makes MANIFEST.in exclusions respected
