@@ -50,7 +50,7 @@ Issues = "https://github.com/bionetslab/SwitchTFI/issues"
 
 [tool.setuptools.packages.find]
 include = ["switchtfi*"]
-exclude = ["switchtfi.d*", "switchtfi.data", "tests*"]
+exclude = ["switchtfi.d*", "switchtfi.data", "tests*", "docs*"]
 
 [tool.setuptools]
 package-dir = {"" = "."}

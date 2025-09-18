@@ -5,6 +5,7 @@ recursive-exclude switchtfi/d *
 
 # Exclude tests and examples
 recursive-exclude tests *
+recursive-exclude docs *
 exclude example.py
 
 # Exclude conda / CI config files
@@ -14,3 +15,5 @@ exclude *.yaml
 # Keep essentials
 include README.md
 include LICENSE
+include pyproject.toml
+
