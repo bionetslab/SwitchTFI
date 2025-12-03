@@ -1,5 +1,5 @@
 # SwitchTFI
-This repository contains the **SwitchTFI** python package as presented in *Identifying transcription factors driving cell differentiation* ([doi](https://doi.org/10.1101/2025.01.20.633856)).
+This repository contains the **SwitchTFI** python package as presented in *SwitchTFI: identifying transcription factors driving cell differentiation* ([doi](https://doi.org/10.1186/s13059-025-03876-0)).
 
 ## Table of Contents
 - [Installation](#installation)
@@ -56,9 +56,9 @@ This project is licensed under the **GNU General Public License v3.0** - see the
 
 ## Citation
 
-If you use **SwitchTFI** in your research or publication, please cite the corresponding preprint:
+If you use **SwitchTFI** in your research or publication, please cite the corresponding publication:
 
-[https://doi.org/10.1101/2025.01.20.633856](https://doi.org/10.1101/2025.01.20.633856)
+[https://doi.org/10.1186/s13059-025-03876-0](https://doi.org/10.1186/s13059-025-03876-0)
 
 ## Contact
 
